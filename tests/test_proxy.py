@@ -1,7 +1,7 @@
 """Lazy proxy tests: instant initialize/tools/list, forwarding unchanged, fail-closed on stale cache, cache == live server."""
 import json, os, pathlib, shutil, subprocess, sys, tempfile, time, unittest
 R = pathlib.Path(__file__).resolve().parent.parent
-P = R / "mcp/fwrule/proxy.py"
+P = R / "mcp/_shared/proxy.py"
 CACHE = R / "mcp/fwrule/tools.cache.json"
 sys.path.insert(0, str(R / "mcp/fwrule")); import proxy
 

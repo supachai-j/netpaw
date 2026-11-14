@@ -1,8 +1,15 @@
 {
   "mcpServers": {
     "subnet-calc": {
-      "command": "uv",
+      "command": "python3",
       "args": [
+        "${CLAUDE_PLUGIN_ROOT}/mcp/_shared/proxy.py",
+        "--expect-sha256",
+        "87707a28dc49bfe2aeab96e2726254418af7a8793de4f430dcfaa70cb56de6ca",
+        "--cache",
+        "${CLAUDE_PLUGIN_ROOT}/mcp/subnet-calc/tools.cache.json",
+        "--",
+        "uv",
         "run",
         "--quiet",
         "--no-project",
@@ -18,9 +25,12 @@
       "command": "python3",
       "env": {},
       "args": [
-        "${CLAUDE_PLUGIN_ROOT}/mcp/fwrule/proxy.py",
+        "${CLAUDE_PLUGIN_ROOT}/mcp/_shared/proxy.py",
         "--expect-sha256",
         "9480395a45c60828a99e0a787bf2c2ded1166abf91a2be01955db0b4fb19ed28",
+        "--reject-xml-declarations",
+        "--set-env",
+        "FOMC_MAX_RULESET_BYTES=4194304",
         "--cache",
         "${CLAUDE_PLUGIN_ROOT}/mcp/fwrule/tools.cache.json",
         "--",
@@ -38,8 +48,15 @@
       ]
     },
     "rfc-lookup": {
-      "command": "uv",
+      "command": "python3",
       "args": [
+        "${CLAUDE_PLUGIN_ROOT}/mcp/_shared/proxy.py",
+        "--expect-sha256",
+        "03cfc04216177c54c4ee7596a0d9a968ddceeda14d184b358c0628f50200b9e8",
+        "--cache",
+        "${CLAUDE_PLUGIN_ROOT}/mcp/rfc-lookup/tools.cache.json",
+        "--",
+        "uv",
         "run",
         "--quiet",
         "--no-project",
@@ -52,8 +69,15 @@
       "env": {}
     },
     "eve-lab": {
-      "command": "uv",
+      "command": "python3",
       "args": [
+        "${CLAUDE_PLUGIN_ROOT}/mcp/_shared/proxy.py",
+        "--expect-sha256",
+        "2cdff6191f2121405ae4620f6aa701ab59acc574d5422fb435def26d664ec9f7",
+        "--cache",
+        "${CLAUDE_PLUGIN_ROOT}/mcp/eve-lab/tools.cache.json",
+        "--",
+        "uv",
         "run",
         "--quiet",
         "--no-project",
@@ -66,8 +90,15 @@
       "env": {}
     },
     "wikipedia": {
-      "command": "uv",
+      "command": "python3",
       "args": [
+        "${CLAUDE_PLUGIN_ROOT}/mcp/_shared/proxy.py",
+        "--expect-sha256",
+        "d6b27915bff17672afe57ba046e94a9beccfdaeb9a9bc89103f069367441ac7a",
+        "--cache",
+        "${CLAUDE_PLUGIN_ROOT}/mcp/wikipedia/tools.cache.json",
+        "--",
+        "uv",
         "run",
         "--quiet",
         "--no-project",

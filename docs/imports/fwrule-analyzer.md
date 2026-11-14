@@ -24,3 +24,6 @@ H2-1 (PAN-OS DOCTYPE strip bypass by nesting, upstream @3bd52d7 parser.py): the 
 
 ## PX-7 (proxy cache pin)
 The proxy now accepts `--expect-sha256 HEX` and refuses to start if its cache hash differs. The value lives in `mcp/servers.json` (copied into each agent's config at install), lint requires it to equal the cache hash, and `scripts/gen_tools_cache.py fwrule` updates both after a reviewed change. Before this, editing `tools.cache.json` and recomputing its own hash made the proxy start (reproduced by the tester; test: tests/test_hardening.py Px7AndE3). Limit: an attacker who can edit both the cache and the agent's config can still change what the proxy advertises; the real server's tool list is compared with the cache before every forwarded call, so a mismatch still fails closed.
+
+## Shared proxy (2026-11-14)
+The proxy moved to `mcp/_shared/proxy.py` and fronts all five servers; fwrule keeps its extras as options (`--reject-xml-declarations`, `--set-env FOMC_MAX_RULESET_BYTES=4194304`). Motivation: the tester found Codex shows only the instantly-answering server in the first four sessions. Hypothesis, not yet measured: lazy start of the other servers removes this.
