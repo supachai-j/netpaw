@@ -55,20 +55,23 @@ def main() -> int:
         errs.extend(langpolicy.check(n, e, ROOT / "mcp"))
         a = e.get("args", [])
         cmd, ca = e.get("command"), a
-        if cmd == "python3" and a and a[0].endswith("/mcp/" + n + "/proxy.py") and "--" in a:
+        if cmd == "python3" and a and a[0] == "{root}/mcp/_shared/proxy.py" and "--" in a:
             cmd, ca = a[a.index("--") + 1], a[a.index("--") + 2:]   # lint the real child command behind the lazy proxy
             cache = ROOT / "mcp" / n / "tools.cache.json"
+            if a[a.index("--cache") + 1:][:1] != ["{root}/mcp/" + n + "/tools.cache.json"]: errs.append(f"server {n}: proxy --cache must be {{root}}/mcp/{n}/tools.cache.json")
             if not cache.exists(): errs.append(f"server {n}: proxy needs {cache.name}")
             else:
                 pin = a[a.index("--expect-sha256") + 1] if "--expect-sha256" in a and a.index("--expect-sha256") + 1 < len(a) else None
                 if pin != json.loads(cache.read_text()).get("sha256"):
                     errs.append(f"server {n}: proxy args need --expect-sha256 equal to {cache.name} sha256 (PX-7; run scripts/gen_tools_cache.py {n} after reviewing the tool changes)")
+        if cmd == "python3" and (not a or a[0] not in ("{root}/mcp/_shared/proxy.py", "{root}/mcp/" + n + "/server.py")):
+            errs.append(f"server {n}: python3 entries must start the shared proxy or mcp/{n}/server.py")
         if cmd == "uv":
             pinned = any(x.startswith("mcp==") for x in ca) or ("--with-requirements" in ca and any(re.search(r"^git\+\S+@[0-9a-f]{40}$", x) for x in ca))
             if "--no-project" not in ca or "--isolated" not in ca or not pinned:
                 errs.append(f"server {n}: uv run needs --no-project --isolated and exact pins (== or requirements + git@sha) (F-8/F-10)")
     for n in srv:
-        if not any((ROOT / "mcp" / n / f).exists() for f in ("tools.lock.json", "tools.cache.json")):
+        if not any((ROOT / "mcp" / n / f).exists() for f in ("tools.cache.json",)):
             errs.append(f"server {n}: no pinned tool definitions (run scripts/gen_tools_cache.py {n}) - rug-pull detection")
     for s in skills():
         m, d = s["meta"], s["dir"]

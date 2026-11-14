@@ -75,7 +75,8 @@ def main() -> int:
                  "--with", f"git+{e['git']}@{e['commit']}", "python", "{root}/" + e["launcher"]]
         if e.get("lazy_proxy"):
             servers[name] = {"command": "python3", "capability": e["capability"], "env": {},
-                             "args": ["{root}/" + e["lazy_proxy"], "--cache", "{root}/" + e["tools_cache"], "--"] + child}
+                             "args": ["{root}/" + e["lazy_proxy"], "--expect-sha256", json.loads((ROOT / e["tools_cache"]).read_text())["sha256"],
+                                      "--reject-xml-declarations", "--set-env", "FOMC_MAX_RULESET_BYTES=4194304", "--cache", "{root}/" + e["tools_cache"], "--"] + child}
         else:
             servers[name] = {"command": "uv", "capability": e["capability"], "env": {}, "args": child[1:]}
     (ROOT / "mcp" / "servers.json").write_text(json.dumps(servers, indent=2) + "\n")

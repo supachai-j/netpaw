@@ -122,19 +122,21 @@ class Review2(unittest.TestCase):
     def test_h2_5_deep_json_is_a_clean_error(self):
         with self.assertRaises(eve.UnlError): eve.validate(unl(["A", "B"], [("A", "B")]), "[" * 100000)
     def test_h2_1_xml_declarations_blocked_in_proxy(self):
-        sys.path.insert(0, str(R / "mcp" / "fwrule")); import proxy
+        sys.path.insert(0, str(R / "mcp" / "_shared")); import proxy
         for x in ('<!DOC<!DOCTYPE x>TYPE r [<!ENTITY a "b">]>', "<!doctype a>", "<! ENTITY x 'y'>", "<!Element e>"):
             self.assertTrue(proxy.has_xml_decl({"ruleset_payload": x}), x)
         self.assertTrue(proxy.has_xml_decl({"a": [{"b": "<!DOCTYPE z>"}]}))
         self.assertFalse(proxy.has_xml_decl({"ruleset_payload": "<config><rule/></config>", "vendor": "paloalto"}))
-        self.assertIn("FOMC_MAX_RULESET_BYTES", proxy.ALLOWED_ENV); self.assertLessEqual(int(proxy.DEFAULT_RULESET_CAP), 64 * 1024 * 1024)
+        a = json.loads((R / "mcp" / "servers.json").read_text())["fwrule"]["args"]
+        self.assertIn("--reject-xml-declarations", a)
+        cap = [x for x in a if x.startswith("FOMC_MAX_RULESET_BYTES=")][0]; self.assertLessEqual(int(cap.split("=")[1]), 64 * 1024 * 1024)
 
 
 class Px7AndE3(unittest.TestCase):
     def test_px7_edited_cache_with_recomputed_hash_is_refused_when_pinned(self):
         import subprocess, tempfile
-        sys.path.insert(0, str(R / "mcp" / "fwrule")); import proxy
-        P = R / "mcp" / "fwrule" / "proxy.py"
+        sys.path.insert(0, str(R / "mcp" / "_shared")); import proxy
+        P = R / "mcp" / "_shared" / "proxy.py"
         good = json.loads((R / "mcp" / "fwrule" / "tools.cache.json").read_text())
         pin = good["sha256"]
         evil = json.loads(json.dumps(good)); evil["tools"][0].setdefault("annotations", {})["readOnlyHint"] = False
@@ -165,3 +167,38 @@ class Px7AndE3(unittest.TestCase):
             with self.assertRaises(eve.UnlError) as c: eve.validate(f'<lab><topology><nodes>{nodes}</nodes><networks><network id="1"/></networks></topology></lab>')
             self.assertIn("interfaces in the lab", str(c.exception))
         finally: eve.MAX_LINKS = old
+
+
+class SharedProxy(unittest.TestCase):
+    def test_every_server_goes_through_the_proxy_with_a_pin(self):
+        reg = json.loads((R / "mcp" / "servers.json").read_text())
+        for n, e in reg.items():
+            a = e["args"]
+            self.assertEqual(e["command"], "python3", n); self.assertEqual(a[0], "{root}/mcp/_shared/proxy.py", n)
+            cache = json.loads((R / "mcp" / n / "tools.cache.json").read_text())
+            self.assertEqual(a[a.index("--expect-sha256") + 1], cache["sha256"], n)
+            self.assertEqual(a[a.index("--cache") + 1], f"{{root}}/mcp/{n}/tools.cache.json", n)
+        flagged = [n for n, e in reg.items() if "--reject-xml-declarations" in e["args"]]
+        self.assertEqual(flagged, ["fwrule"])      # the XML guard is fwrule-specific; other servers must not reject '<!DOCTYPE' text
+
+    def test_xml_guard_is_opt_in(self):
+        import subprocess, tempfile
+        P = R / "mcp" / "_shared" / "proxy.py"
+        cache = R / "mcp" / "wikipedia" / "tools.cache.json"
+        fake = "import json,sys\nfor l in sys.stdin:\n m=json.loads(l)\n if m.get('method')=='tools/call': print(json.dumps({'jsonrpc':'2.0','id':m['id'],'result':{'content':[{'type':'text','text':'forwarded'}]}}),flush=True)\n elif m.get('method')=='initialize': print(json.dumps({'jsonrpc':'2.0','id':m['id'],'result':{'protocolVersion':'2025-03-26','capabilities':{},'serverInfo':{'name':'f','version':'0'}}}),flush=True)\n elif m.get('method')=='tools/list': print(json.dumps({'jsonrpc':'2.0','id':m['id'],'result':{'tools':json.load(open(sys.argv[1]))['tools']}}),flush=True)\n"
+        msgs = [{"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": "2025-03-26", "capabilities": {}, "clientInfo": {"name": "t", "version": "0"}}},
+                {"jsonrpc": "2.0", "id": 2, "method": "tools/call", "params": {"name": "get_summary", "arguments": {"page": "<!DOCTYPE html>"}}}]
+        with tempfile.TemporaryDirectory() as t:
+            f = pathlib.Path(t) / "c.py"; f.write_text(fake)
+            def run(extra):
+                p = subprocess.run([sys.executable, str(P), *extra, "--cache", str(cache), "--", sys.executable, str(f), str(cache)], input="\n".join(json.dumps(m) for m in msgs) + "\n", capture_output=True, text=True, timeout=30)
+                return {json.loads(l)["id"]: json.loads(l) for l in p.stdout.splitlines()}
+            self.assertIn("forwarded", json.dumps(run([])[2]))
+            self.assertEqual(run(["--reject-xml-declarations"])[2]["error"]["code"], -32602)
+
+    def test_bad_options_are_refused(self):
+        import subprocess
+        P = R / "mcp" / "_shared" / "proxy.py"
+        for opts in (["--set-env", "lowercase=1"], ["--set-env", "A"], ["--bogus"], ["--cache"]):
+            r = subprocess.run([sys.executable, str(P), *opts, "--", "true"], capture_output=True, text=True, input="", timeout=20)
+            self.assertNotEqual(r.returncode, 0, opts)

@@ -52,8 +52,12 @@ class Quality(unittest.TestCase):
             f = SK(d) / "evals" / "evals.json"; e = json.loads(f.read_text()); e["evals"][0]["assertions"] = []; f.write_text(json.dumps(e))
         rc, out = lint_copy(m); self.assertEqual(rc, 1); self.assertIn("assertions", out)
     def test_tool_lock_required(self):
-        rc, out = lint_copy(lambda d: (d / "mcp" / "rfc-lookup" / "tools.lock.json").unlink())
+        rc, out = lint_copy(lambda d: (d / "mcp" / "rfc-lookup" / "tools.cache.json").unlink())
         self.assertEqual(rc, 1); self.assertIn("pinned tool definitions", out)
+    def test_python3_entry_must_use_shared_proxy(self):
+        def m(d):
+            f = d / "mcp" / "servers.json"; r = json.loads(f.read_text()); r["wikipedia"]["args"][0] = "{root}/mcp/fwrule/proxy.py"; f.write_text(json.dumps(r))
+        rc, out = lint_copy(m); self.assertEqual(rc, 1); self.assertIn("shared proxy", out)
     def test_evals_not_shipped_in_dist(self):
         with tempfile.TemporaryDirectory() as t:
             d = pathlib.Path(t) / "r"; shutil.copytree(R, d, ignore=shutil.ignore_patterns(".git", "dist", "__pycache__"))

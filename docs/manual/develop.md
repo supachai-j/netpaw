@@ -36,8 +36,8 @@ Only `name, description, license, compatibility, metadata` are allowed at top le
 ## Add an MCP server
 
 1. Prefer stdlib Python. Use FastMCP only for the wrapper; call `harden` so unknown fields are rejected. Read tools: `ToolAnnotations(readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)`. Write tools must not set `readOnlyHint`.
-2. Register it in `mcp/servers.json` with `capability`, an explicit `egress` list (`[]` if none) and `uv run --quiet --no-project --isolated --with mcp==<pin> python {root}/mcp/<name>/server.py`.
-3. Generate the tool-definition lock: `python3 scripts/gen_tools_cache.py <name>`.
+2. Register it in `mcp/servers.json` with `capability` and an explicit `egress` list (`[]` if none). Start it through the shared proxy: `python3 {root}/mcp/_shared/proxy.py --expect-sha256 <hash> --cache {root}/mcp/<name>/tools.cache.json -- uv run --quiet --no-project --isolated --with mcp==<pin> python {root}/mcp/<name>/server.py`.
+3. Generate the tool-definition cache and pin: `python3 scripts/gen_tools_cache.py <name>` (writes `mcp/<name>/tools.cache.json` and the hash in `servers.json`). Review the diff; a changed tool definition must be reviewed, not auto-accepted.
 4. Add tests, including hostile input (oversize, malformed, hidden characters, injection text in fetched data).
 
 ## Languages

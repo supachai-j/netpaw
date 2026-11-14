@@ -15,13 +15,14 @@ What it does and does NOT do (reviewed: docs/imports/fwrule-analyzer.md, PROXY-R
 - Malformed input (non-object JSON, batches) gets -32600. A child that hangs is killed after a timeout.
 - No shell; child started from an argv list. Server->client requests from the child are answered with -32601.
 
-Usage: proxy.py --cache tools.cache.json -- <child command...>
+Usage: proxy.py [--expect-sha256 HEX] [--reject-xml-declarations] [--set-env K=V ...] --cache tools.cache.json -- <child command...>
+
+Shared by every server (mcp/<name>/tools.cache.json); fwrule additionally uses --reject-xml-declarations and --set-env FOMC_MAX_RULESET_BYTES=...
 """
 import hashlib, json, os, queue, re, subprocess, sys, threading
 
 ALLOWED_ENV = ("PATH", "HOME", "LANG", "LC_ALL", "TMPDIR", "XDG_CACHE_HOME", "XDG_DATA_HOME", "SSL_CERT_FILE", "SSL_CERT_DIR",
-               "USER", "LOGNAME", "UV_CACHE_DIR", "UV_PYTHON_INSTALL_DIR", "UV_PYTHON", "UV_NO_PROGRESS", "UV_OFFLINE", "FOMC_MAX_RULESET_BYTES")
-DEFAULT_RULESET_CAP = "4194304"   # 4 MiB; upstream default is 64 MiB. A user may set FOMC_MAX_RULESET_BYTES in the environment (never above upstream).
+               "USER", "LOGNAME", "UV_CACHE_DIR", "UV_PYTHON_INSTALL_DIR", "UV_PYTHON", "UV_NO_PROGRESS", "UV_OFFLINE")
 _XML_DECL = re.compile(r"<!\s*(doctype|entity|element|attlist|notation)", re.I)   # upstream strips DOCTYPE with one regex pass that can be bypassed by nesting (security review H2-1)
 
 
@@ -47,9 +48,9 @@ def err(i, code, msg): return {"jsonrpc": "2.0", "id": i, "error": {"code": code
 
 
 class Child:
-    def __init__(self, argv, init_params):
+    def __init__(self, argv, init_params, extra_env=None):
         env = {k: v for k, v in os.environ.items() if k in ALLOWED_ENV}
-        env.setdefault("FOMC_MAX_RULESET_BYTES", DEFAULT_RULESET_CAP)
+        for k, v in (extra_env or {}).items(): env.setdefault(k, v)   # values pinned in the registry; the user may override by setting the variable
         self.p = subprocess.Popen(argv, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=sys.stderr, env=env, text=True, bufsize=1)
         self.q = queue.Queue(); self.n = 0
         threading.Thread(target=self._reader, daemon=True).start()
@@ -89,10 +90,18 @@ def main():
     a = sys.argv[1:]
     if "--" not in a: sys.exit("usage: proxy.py [--expect-sha256 HEX] --cache FILE -- CMD...")
     opts, argv = a[:a.index("--")], a[a.index("--") + 1:]
-    expect = None
-    if opts[:1] == ["--expect-sha256"] and len(opts) >= 2: expect, opts = opts[1].lower(), opts[2:]
-    if len(opts) != 2 or opts[0] != "--cache" or not argv: sys.exit("usage: proxy.py [--expect-sha256 HEX] --cache FILE -- CMD...")
-    cache_path = opts[1]
+    usage = "usage: proxy.py [--expect-sha256 HEX] [--reject-xml-declarations] [--set-env K=V ...] --cache FILE -- CMD..."
+    expect, cache_path, reject_xml, extra_env = None, None, False, {}
+    i = 0
+    while i < len(opts):
+        o = opts[i]
+        if o == "--expect-sha256" and i + 1 < len(opts): expect = opts[i + 1].lower(); i += 2
+        elif o == "--cache" and i + 1 < len(opts): cache_path = opts[i + 1]; i += 2
+        elif o == "--reject-xml-declarations": reject_xml = True; i += 1
+        elif o == "--set-env" and i + 1 < len(opts) and re.fullmatch(r"[A-Z][A-Z0-9_]*=[^\x00]*", opts[i + 1]):
+            k, v = opts[i + 1].split("=", 1); extra_env[k] = v; i += 2
+        else: sys.exit(usage)
+    if cache_path is None or not argv: sys.exit(usage)
     cache = json.load(open(cache_path))
     if tools_hash(cache["tools"]) != cache["sha256"]: sys.exit("tools cache corrupted (sha256 mismatch)")
     # PX-7: the cache file vouches for itself, so an attacker who edits tools and recomputes sha256 wins. The expected hash is pinned in the
@@ -104,7 +113,7 @@ def main():
     def ensure():
         if st["child"] is None or st["child"].p.poll() is not None:
             st["child"], st["ok"] = None, None
-            c = Child(argv, st["init"]); r = c.call("tools/list")
+            c = Child(argv, st["init"], extra_env); r = c.call("tools/list")
             live = r.get("result", {}).get("tools", [])
             st["ok"] = (tools_hash(live) == cache["sha256"]); st["child"] = c
             if not st["ok"]: sys.stderr.write("netpaw proxy: live tools/list differs from cache; refusing tools/call\n")
@@ -130,7 +139,7 @@ def main():
             if not isinstance(params, dict) or params.get("name") not in names:
                 send(err(i, -32602, "unknown tool")); continue
             if st["init"] is None: send(err(i, -32002, "initialize first")); continue
-            if has_xml_decl(params.get("arguments")): send(err(i, -32602, "XML DOCTYPE/ENTITY declarations are not accepted in tool arguments")); continue
+            if reject_xml and has_xml_decl(params.get("arguments")): send(err(i, -32602, "XML DOCTYPE/ENTITY declarations are not accepted in tool arguments")); continue
             try:
                 c = ensure()
                 if not st["ok"]: send(err(i, -32001, "tool list changed upstream; regenerate tools cache and re-review")); continue
