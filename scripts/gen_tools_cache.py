@@ -33,6 +33,11 @@ def one(name, check):
         print(f"{name}: cache {'matches' if same else 'DIFFERS from'} live tool list ({out['sha256'][:12]})")
         return 0 if same else 1
     path.write_text(json.dumps(out, indent=1, sort_keys=True) + "\n"); print("wrote", path, out["sha256"][:12], f"{len(tools)} tools")
+    if name == "fwrule":   # PX-7: keep the pin in the registry in step with the reviewed cache
+        reg = ROOT / "mcp" / "servers.json"; d = json.loads(reg.read_text()); a = d[name]["args"]
+        if "--expect-sha256" in a: a[a.index("--expect-sha256") + 1] = out["sha256"]
+        else: a[a.index("--cache"):a.index("--cache")] = ["--expect-sha256", out["sha256"]]
+        reg.write_text(json.dumps(d, indent=2) + "\n"); print("pinned", out["sha256"][:12], "in mcp/servers.json")
     return 0
 
 

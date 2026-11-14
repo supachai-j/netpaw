@@ -19,6 +19,8 @@ MAX_NETS = 2000
 MAX_NET_MEMBERS = 64        # pairwise adjacency per segment grows with members^2
 MAX_JSON = 100_000
 MAX_REQ = 200
+MAX_IFACES_PER_NODE = 256     # more is an error, never silently truncated
+MAX_LINKS = 20_000            # total interface attachments in one lab (E-3)
 _DECL = re.compile(r"<!\s*(DOCTYPE|ENTITY|ELEMENT|ATTLIST|NOTATION)", re.I)
 
 
@@ -58,7 +60,14 @@ def parse(unl_text: str):
     # DOCTYPE/ENTITY/ELEMENT declarations are refused above and size is capped; tests/test_eve.py covers the hostile cases.
     try: root = ET.fromstring(unl_text)  # nosec B314
     except ET.ParseError as e: raise UnlError(f"not valid XML: {_s(e, 120)}") from None
-    nodes, nets = {}, {}
+    nodes, nets, total = {}, {}, 0
+    def _ifaces(el):
+        nonlocal total
+        items = el.findall("interface")
+        if len(items) > MAX_IFACES_PER_NODE: raise UnlError(f"node {_s(el.attrib.get('name', el.attrib.get('id', '?')), 32)} has {len(items)} interfaces (limit {MAX_IFACES_PER_NODE})")
+        total += len(items)
+        if total > MAX_LINKS: raise UnlError(f"more than {MAX_LINKS} interfaces in the lab")
+        return items
     for el in (root.findall("./topology/nodes/node") or list(root.iter("node"))):   # real labs keep nodes under topology/nodes; <objects> etc. are not nodes
         nid = el.attrib.get("id")
         if not nid: continue
@@ -66,7 +75,7 @@ def parse(unl_text: str):
         if _s(nid, 16) in nodes: raise UnlError("duplicate node id (ids that differ only by hidden characters count as equal)")
         nodes[_s(nid, 16)] = {"name": _s(el.attrib.get("name", f"node{nid}")), "template": _s(el.attrib.get("template", "")),
                               "ifaces": [(_s(i.attrib.get("name", f"iface{i.attrib.get('id', '')}")), _s(i.attrib.get("network_id", ""), 16))
-                                         for i in el.findall("interface")][:256]}
+                                         for i in _ifaces(el)]}
     for el in (root.findall("./topology/networks/network") or list(root.iter("network"))):
         nid = el.attrib.get("id")
         if not nid: continue

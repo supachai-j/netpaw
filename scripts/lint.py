@@ -59,6 +59,10 @@ def main() -> int:
             cmd, ca = a[a.index("--") + 1], a[a.index("--") + 2:]   # lint the real child command behind the lazy proxy
             cache = ROOT / "mcp" / n / "tools.cache.json"
             if not cache.exists(): errs.append(f"server {n}: proxy needs {cache.name}")
+            else:
+                pin = a[a.index("--expect-sha256") + 1] if "--expect-sha256" in a and a.index("--expect-sha256") + 1 < len(a) else None
+                if pin != json.loads(cache.read_text()).get("sha256"):
+                    errs.append(f"server {n}: proxy args need --expect-sha256 equal to {cache.name} sha256 (PX-7; run scripts/gen_tools_cache.py {n} after reviewing the tool changes)")
         if cmd == "uv":
             pinned = any(x.startswith("mcp==") for x in ca) or ("--with-requirements" in ca and any(re.search(r"^git\+\S+@[0-9a-f]{40}$", x) for x in ca))
             if "--no-project" not in ca or "--isolated" not in ca or not pinned:

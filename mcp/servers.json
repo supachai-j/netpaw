@@ -21,6 +21,8 @@
     "env": {},
     "args": [
       "{root}/mcp/fwrule/proxy.py",
+      "--expect-sha256",
+      "9480395a45c60828a99e0a787bf2c2ded1166abf91a2be01955db0b4fb19ed28",
       "--cache",
       "{root}/mcp/fwrule/tools.cache.json",
       "--",
