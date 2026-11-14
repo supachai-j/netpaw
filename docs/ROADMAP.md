@@ -26,7 +26,7 @@ Not before a server-side write gate exists: anything with `risk: write`, pyATS, 
 
 ## R5 - project hygiene
 - [ ] B-3: MCP config points at a stable install dir, not a checkout
-- [ ] PX-7: pin cache sha256 + CODEOWNERS for `mcp/**/tools.*.json`
+- [x] PX-7: the proxy takes `--expect-sha256` pinned in mcp/servers.json (lint compares it with the cache); CODEOWNERS already covers /mcp/
 - [ ] fuzz the fwrule XML parser
 - [ ] add Cisco Skill Scanner (and SkillSpector after vetting its maintainers) as a scheduled CI job on a pinned version
 - [ ] update docs/CONFORMANCE.md SHAs after the history rewrite

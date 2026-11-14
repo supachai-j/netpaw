@@ -128,3 +128,40 @@ class Review2(unittest.TestCase):
         self.assertTrue(proxy.has_xml_decl({"a": [{"b": "<!DOCTYPE z>"}]}))
         self.assertFalse(proxy.has_xml_decl({"ruleset_payload": "<config><rule/></config>", "vendor": "paloalto"}))
         self.assertIn("FOMC_MAX_RULESET_BYTES", proxy.ALLOWED_ENV); self.assertLessEqual(int(proxy.DEFAULT_RULESET_CAP), 64 * 1024 * 1024)
+
+
+class Px7AndE3(unittest.TestCase):
+    def test_px7_edited_cache_with_recomputed_hash_is_refused_when_pinned(self):
+        import subprocess, tempfile
+        sys.path.insert(0, str(R / "mcp" / "fwrule")); import proxy
+        P = R / "mcp" / "fwrule" / "proxy.py"
+        good = json.loads((R / "mcp" / "fwrule" / "tools.cache.json").read_text())
+        pin = good["sha256"]
+        evil = json.loads(json.dumps(good)); evil["tools"][0].setdefault("annotations", {})["readOnlyHint"] = False
+        evil["sha256"] = proxy.tools_hash(evil["tools"])              # attacker recomputes the self-check
+        with tempfile.TemporaryDirectory() as t:
+            f = pathlib.Path(t) / "c.json"; f.write_text(json.dumps(evil))
+            run = lambda extra: subprocess.run([sys.executable, str(P), *extra, "--cache", str(f), "--", "true"], capture_output=True, text=True, input="", timeout=20)
+            unpinned = run([]); self.assertEqual(unpinned.returncode, 0)             # old behaviour: starts (this is the PX-7 gap)
+            pinned = run(["--expect-sha256", pin]); self.assertNotEqual(pinned.returncode, 0)
+            self.assertIn("pinned --expect-sha256", pinned.stderr)
+            f.write_text(json.dumps(good)); self.assertEqual(run(["--expect-sha256", pin]).returncode, 0)
+            self.assertNotEqual(run(["--expect-sha256", "0" * 64]).returncode, 0)
+
+    def test_px7_registry_pin_matches_cache_and_lint_checks_it(self):
+        reg = json.loads((R / "mcp" / "servers.json").read_text())["fwrule"]["args"]
+        cache = json.loads((R / "mcp" / "fwrule" / "tools.cache.json").read_text())
+        self.assertEqual(reg[reg.index("--expect-sha256") + 1], cache["sha256"])
+        import re
+        self.assertIn("--expect-sha256", (R / "scripts" / "lint.py").read_text())
+
+    def test_e3_interface_caps_are_errors_not_truncation(self):
+        many = "".join(f'<interface id="{i}" network_id="1"/>' for i in range(eve.MAX_IFACES_PER_NODE + 1))
+        with self.assertRaises(eve.UnlError) as c: eve.validate(f'<lab><topology><nodes><node id="1" name="A">{many}</node></nodes><networks><network id="1"/></networks></topology></lab>')
+        self.assertIn("interfaces (limit", str(c.exception))
+        old = eve.MAX_LINKS; eve.MAX_LINKS = 5
+        try:
+            nodes = "".join(f'<node id="{i}" name="N{i}"><interface id="0" network_id="1"/><interface id="1" network_id="1"/></node>' for i in range(1, 5))
+            with self.assertRaises(eve.UnlError) as c: eve.validate(f'<lab><topology><nodes>{nodes}</nodes><networks><network id="1"/></networks></topology></lab>')
+            self.assertIn("interfaces in the lab", str(c.exception))
+        finally: eve.MAX_LINKS = old

@@ -87,10 +87,17 @@ class Child:
 
 def main():
     a = sys.argv[1:]
-    if "--" not in a or len(a) < 4 or a[0] != "--cache": sys.exit("usage: proxy.py --cache FILE -- CMD...")
-    cache_path, argv = a[1], a[a.index("--") + 1:]
+    if "--" not in a: sys.exit("usage: proxy.py [--expect-sha256 HEX] --cache FILE -- CMD...")
+    opts, argv = a[:a.index("--")], a[a.index("--") + 1:]
+    expect = None
+    if opts[:1] == ["--expect-sha256"] and len(opts) >= 2: expect, opts = opts[1].lower(), opts[2:]
+    if len(opts) != 2 or opts[0] != "--cache" or not argv: sys.exit("usage: proxy.py [--expect-sha256 HEX] --cache FILE -- CMD...")
+    cache_path = opts[1]
     cache = json.load(open(cache_path))
     if tools_hash(cache["tools"]) != cache["sha256"]: sys.exit("tools cache corrupted (sha256 mismatch)")
+    # PX-7: the cache file vouches for itself, so an attacker who edits tools and recomputes sha256 wins. The expected hash is pinned in the
+    # agent's config (copied from mcp/servers.json at install time), a different place from the cache file.
+    if expect is not None and cache["sha256"] != expect: sys.exit("tools cache does not match the pinned --expect-sha256 (changed tool definitions need review)")
     names = {t["name"] for t in cache["tools"]}
     st = {"child": None, "ok": None, "init": None}
 
