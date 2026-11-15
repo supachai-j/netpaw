@@ -3,7 +3,7 @@
 
   netpaw agents | profiles | list | doctor | version
   netpaw install -a AGENT [AGENT..] [-p minimal|standard|full] [-s SKILL..] [--project] [--with-mcp] [--root P] [--apply]
-  netpaw uninstall [-a AGENT..] [--apply]
+  netpaw uninstall [-a AGENT..] [--apply]      (no --root needed: paths come from ~/.netpaw/manifest.json)
   netpaw build | lint | test | smoke | site | import      (repo checkout only)
 
 Dry run by default: nothing is written without --apply. Skills are copied; files are recorded with sha256 in
@@ -108,10 +108,11 @@ def merge_mcp(kind, cfg_path, servers, apply):
         cur = data.setdefault("mcpServers", {})
         clash = [k for k in servers if k in cur]
         if clash: return f"refused: server(s) already in {cfg_path}: {clash} (merge by hand)", None
+        created = not cfg_path.exists()
         if apply:
-            if cfg_path.exists(): backup(cfg_path)
+            if not created: backup(cfg_path)
             cfg_path.parent.mkdir(parents=True, exist_ok=True); cur.update(servers); cfg_path.write_text(json.dumps(data, indent=2) + "\n")
-        return f"{'added' if apply else 'would add'} {sorted(servers)} to {cfg_path}", {"file": str(cfg_path), "kind": "json", "servers": sorted(servers)}
+        return f"{'added' if apply else 'would add'} {sorted(servers)} to {cfg_path}", {"file": str(cfg_path), "kind": "json", "servers": sorted(servers), "created": created}
     text = cfg_path.read_text() if cfg_path.exists() else ""
     if BEGIN in text: return f"refused: netpaw block already in {cfg_path}", None
     if kind == "toml":
@@ -119,16 +120,23 @@ def merge_mcp(kind, cfg_path, servers, apply):
         if clash: return f"refused: server(s) already in {cfg_path}: {clash}", None
         body = "\n".join(f'[mcp_servers.{k}]\ncommand = {json.dumps(v["command"])}\nargs = {json.dumps(v["args"])}\n' for k, v in servers.items())
     else:  # yaml
-        if re.search(r"(?m)^mcp_servers:", text): return f"refused: {cfg_path} already has a top-level mcp_servers: (merge by hand)", None
         lines = ["mcp_servers:"]
         for k, v in servers.items():
             lines += [f"  {k}:", f"    command: {v['command']}", "    args:"] + [f"      - {json.dumps(t)}" for t in v["args"]]
         body = "\n".join(lines) + "\n"
+        if re.search(r"(?m)^mcp_servers:", text):
+            # Editing someone's YAML mapping without a YAML library is how configs get broken, so refuse and print what to paste (review R-1).
+            clash = [k for k in servers if re.search(rf"(?m)^  {re.escape(k)}:", text)]
+            paste = "\n".join(lines[1:])
+            return (f"refused: {cfg_path} already has a top-level mcp_servers: (netpaw does not edit an existing YAML mapping)."
+                    + (f" Already present: {clash}." if clash else "")
+                    + f" Paste these lines under your existing mcp_servers: key, then restart Hermes:\n{paste}"), None
     block = f"\n{BEGIN}\n{body}{END}\n"
+    created = not cfg_path.exists()
     if apply:
-        if cfg_path.exists(): backup(cfg_path)
+        if not created: backup(cfg_path)
         cfg_path.parent.mkdir(parents=True, exist_ok=True); cfg_path.write_text(text + block)
-    return f"{'added' if apply else 'would add'} marker block with {sorted(servers)} to {cfg_path}", {"file": str(cfg_path), "kind": kind, "servers": sorted(servers)}
+    return f"{'added' if apply else 'would add'} marker block with {sorted(servers)} to {cfg_path}", {"file": str(cfg_path), "kind": kind, "servers": sorted(servers), "created": created}
 
 
 def cmd_install(a):
@@ -206,13 +214,20 @@ def cmd_uninstall(a):
                     gone = [k for k in m["servers"] if k in cur]
                     out(f"  {'remove' if a.apply else 'would remove'} mcp servers {gone} from {cfg}")
                     if a.apply and gone:
-                        backup(cfg); [cur.pop(k) for k in gone]; cfg.write_text(json.dumps(data, indent=2) + "\n")
+                        if not m.get("created"): backup(cfg)
+                        [cur.pop(k) for k in gone]
+                        if m.get("created") and data == {"mcpServers": {}}: cfg.unlink(); out(f"  removed {cfg} (netpaw created it and it is now empty)")
+                        else: cfg.write_text(json.dumps(data, indent=2) + "\n")
                 else:
                     t = cfg.read_text()
                     if BEGIN in t and END in t:
                         out(f"  {'remove' if a.apply else 'would remove'} netpaw marker block from {cfg}")
                         if a.apply:
-                            backup(cfg); cfg.write_text(re.sub(rf"\n?{re.escape(BEGIN)}.*?{re.escape(END)}\n?", "", t, count=1, flags=re.S))
+                            rest = re.sub(rf"\n?{re.escape(BEGIN)}.*?{re.escape(END)}\n?", "", t, count=1, flags=re.S)
+                            if m.get("created") and not rest.strip(): cfg.unlink(); out(f"  removed {cfg} (netpaw created it and it is now empty)")
+                            else:
+                                if not m.get("created"): backup(cfg)
+                                cfg.write_text(rest)
         if a.apply:
             left = {f: h for f, h in rec["files"].items() if pathlib.Path(f).exists()}
             if left: rec["files"] = left; rec["mcp"] = None; keep.append(rec)   # modified files stay tracked
@@ -255,6 +270,7 @@ def main():
     n.add_argument("-s", "--skills", nargs="*"); n.add_argument("--project", action="store_true"); n.add_argument("--with-mcp", action="store_true")
     n.add_argument("--allow-untested", action="store_true"); n.add_argument("--root", default=str(ROOT)); n.add_argument("--apply", action="store_true")
     u = sub.add_parser("uninstall"); u.add_argument("-a", "--agent", nargs="*", choices=sorted(AGENTS)); u.add_argument("--apply", action="store_true")
+    u.add_argument("--root", help="accepted for symmetry with install and ignored: uninstall works from ~/.netpaw/manifest.json")   # review R-3
     a = ap.parse_args()
     if a.c == "version": out(PROG, version()); return 0
     if a.c == "agents":

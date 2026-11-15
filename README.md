@@ -1,6 +1,6 @@
 # netpaw
 
-**Network-engineering skills for any AI agent.** Subnet maths, firewall-rule analysis, RFC lookup and lab-topology checks, written once as open-standard [Agent Skills](https://agentskills.io) plus [MCP](https://modelcontextprotocol.io) tools, and installed into Claude Code, Codex, Hermes Agent, OpenClaw and thClaws from a single source.
+**Network-engineering skills for any AI agent.** Subnet maths, firewall-rule analysis, RFC and Wikipedia lookup, EVE-NG lab-topology checks and BGP/RPKI/registry lookups, written once as open-standard [Agent Skills](https://agentskills.io) plus [MCP](https://modelcontextprotocol.io) tools, and installed into Claude Code, Codex, Hermes Agent, OpenClaw and thClaws from a single source.
 
 [![ci](https://github.com/supachai-j/netpaw/actions/workflows/ci.yml/badge.svg)](https://github.com/supachai-j/netpaw/actions/workflows/ci.yml)
 [![security](https://github.com/supachai-j/netpaw/actions/workflows/security.yml/badge.svg)](https://github.com/supachai-j/netpaw/actions/workflows/security.yml)
@@ -41,9 +41,11 @@ bin/netpaw doctor                  # checks uv, python and which agents are pres
 bin/netpaw list                    # skills, risk level, maturity, network egress
 bin/netpaw install -a codex -p standard --root "$PWD"            # dry run: shows what would change
 bin/netpaw install -a codex -p standard --root "$PWD" --with-mcp --apply
+bin/netpaw uninstall                                             # dry run of the removal
+bin/netpaw uninstall -a codex --apply                            # removes only what netpaw installed (no --root needed)
 ```
 
-`netpaw install` is a **dry run unless you pass `--apply`**, backs up any config it edits, and `netpaw uninstall --apply` removes only what it installed. Profiles: `minimal`, `standard`, `online` (adds the two skills that use the internet), `full`.
+`netpaw install` is a **dry run unless you pass `--apply`**, backs up any config it edits (Hermes: if your `config.yaml` already has `mcp_servers:`, it prints the lines to paste instead of editing), and `netpaw uninstall --apply` removes only what it installed. Profiles: `minimal`, `standard`, `online` (adds the three skills that use the internet), `full`.
 
 Claude Code (plugin, from a clone): `claude --plugin-dir ./netpaw`. The marketplace route (`/plugin marketplace add supachai-j/netpaw`) has not been tested yet.
 
