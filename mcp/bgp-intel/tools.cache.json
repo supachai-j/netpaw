@@ -3,7 +3,7 @@
   "name": "bgp-intel",
   "version": "1.30.0"
  },
- "sha256": "7eeacde9a2281006fd59d37af840a684bbc654162321fafee8d7bf1ee646d69d",
+ "sha256": "19610c744a53d4201e630153bca33d854d34207ec424fcc92d93532f31e3825f",
  "tools": [
   {
    "annotations": {
@@ -104,7 +104,7 @@
     "openWorldHint": true,
     "readOnlyHint": true
    },
-   "description": "RDAP registration of a public IP address, CIDR prefix or ASN (written AS3333) at the responsible RIR. Shows who it is registered to, not who announces it. Organisations only, no personal contact data.",
+   "description": "RDAP registration of a public IP address, CIDR prefix or ASN (written AS3333) at the responsible RIR. Shows who it is registered to, not who announces it. Organisations only; contact records of individuals are dropped, but free-text names can still contain personal data.",
    "inputSchema": {
     "additionalProperties": false,
     "properties": {

@@ -128,7 +128,7 @@
     "args": [
       "{root}/mcp/_shared/proxy.py",
       "--expect-sha256",
-      "7eeacde9a2281006fd59d37af840a684bbc654162321fafee8d7bf1ee646d69d",
+      "19610c744a53d4201e630153bca33d854d34207ec424fcc92d93532f31e3825f",
       "--cache",
       "{root}/mcp/bgp-intel/tools.cache.json",
       "--",

@@ -26,7 +26,7 @@ def rpki_validate(prefix: str, origin_asn: str, fresh: bool = False) -> dict:
 
 @mcp.tool(annotations=RO)
 def registry_lookup(resource: str, fresh: bool = False) -> dict:
-    """RDAP registration of a public IP address, CIDR prefix or ASN (written AS3333) at the responsible RIR. Shows who it is registered to, not who announces it. Organisations only, no personal contact data."""
+    """RDAP registration of a public IP address, CIDR prefix or ASN (written AS3333) at the responsible RIR. Shows who it is registered to, not who announces it. Organisations only; contact records of individuals are dropped, but free-text names can still contain personal data."""
     return _run(core.registry_lookup, resource, fresh)
 
 

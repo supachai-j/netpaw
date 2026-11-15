@@ -221,3 +221,15 @@ class MalformedHttp(unittest.TestCase):
                     mod.urllib.request.build_opener = lambda *a, e=exc: Op(e)
                     with self.assertRaises(err, msg=(mod.__name__, exc)): call()
             finally: mod.urllib.request.build_opener = orig
+
+
+class ProxyDeepJson(unittest.TestCase):
+    def test_h5_2_deeply_nested_line_does_not_kill_the_proxy(self):
+        import subprocess
+        P = R / "mcp" / "_shared" / "proxy.py"; cache = R / "mcp" / "wikipedia" / "tools.cache.json"
+        deep = "[" * 100000 + "]" * 100000
+        init = {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": "2025-03-26", "capabilities": {}, "clientInfo": {"name": "t", "version": "0"}}}
+        lst = {"jsonrpc": "2.0", "id": 2, "method": "tools/list"}
+        p = subprocess.run([sys.executable, str(P), "--cache", str(cache), "--", "true"], input=deep + "\n" + json.dumps(init) + "\n" + json.dumps(lst) + "\n", capture_output=True, text=True, timeout=30)
+        out = [json.loads(l) for l in p.stdout.splitlines()]
+        self.assertEqual(out[0]["error"]["code"], -32700); self.assertEqual(out[-1]["id"], 2); self.assertIn("tools", out[-1]["result"])
