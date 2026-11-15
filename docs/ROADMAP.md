@@ -29,7 +29,7 @@ Not before a server-side write gate exists: anything with `risk: write`, pyATS, 
 - [x] PX-7: the proxy takes `--expect-sha256` pinned in mcp/servers.json (lint compares it with the cache); CODEOWNERS already covers /mcp/
 - [ ] fuzz the fwrule XML parser
 - [x] H5-3 proxy call timeout per call; H5-4 wall-clock deadline including connect, status line and headers (mcp/_shared/netguard.py); H5-6 caches bounded by total characters as well as entries
-- [ ] H5-7 before the first non-Python server: langpolicy scans dist/, catches dynamic import, Go net/smtp and x/sys/unix
+- [x] H5-7 langpolicy scans the TypeScript dist/ output, treats dynamic import/require of a non-literal as code evaluation, and covers Go net/smtp, net/textproto, x/sys/unix, plugin and Rust libc exec/fork/system (still a regex tripwire)
 - [ ] add Cisco Skill Scanner (and SkillSpector after vetting its maintainers) as a scheduled CI job on a pinned version
 - [ ] update docs/CONFORMANCE.md SHAs after the history rewrite
 - Owner-only: PyPI/npm name reservation, GitHub Support request, tailnet serve of the manual
