@@ -12,6 +12,7 @@ from __future__ import annotations
 import datetime, http.client, ipaddress, json, os, re, sys, time, urllib.error, urllib.parse, urllib.request
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "_shared"))
 from textclean import flatten
+from netguard import with_deadline, trim
 
 RDAP_HOSTS = ("rdap.db.ripe.net", "rdap.arin.net", "rdap.apnic.net", "rdap.lacnic.net", "rdap.afrinic.net")
 ALLOW = {
@@ -35,6 +36,7 @@ CTYPES = ("application/json", "application/rdap+json")
 TTL = {"rpki-validator.ripe.net": 300, "stat.ripe.net": 3600, "www.peeringdb.com": 3600, "data.iana.org": 86400}
 TTL_RDAP = 86400
 CACHE_MAX = 64
+CACHE_CHARS = 24_000_000      # total characters kept (review H5-6; was up to 64 x 8 MB)
 _cache: dict[str, tuple[float, str]] = {}
 _last: dict[str, float] = {}
 
@@ -91,7 +93,15 @@ def _read(r, limit: int, end: float) -> bytes:
     return bytes(buf)
 
 
-def _http(url: str, hops: int = 0) -> str:
+def _http(url: str, hops: int = 0):
+    """Wall-clock limit for one request including connect, status line and headers (review H5-4). Referral hops get their own limit."""
+    if not allowed(url): raise BgpError("refused: URL outside the allow-list")
+    host = urllib.parse.urlsplit(url).hostname
+    return with_deadline(lambda: _http_once(url, hops), TIMEOUT + 5,
+                         BgpError(f"source unavailable: {host} too slow (overall timeout, including headers). This is not the same as 'no record'."))
+
+
+def _http_once(url: str, hops: int = 0):
     """The only function that touches the network."""
     if not allowed(url): raise BgpError("refused: URL outside the allow-list")
     host = urllib.parse.urlsplit(url).hostname
@@ -137,7 +147,7 @@ def _get(url: str, fresh: bool = False):
         got = _http(url)
         text, answered = got if isinstance(got, tuple) else (got, host)
         _cache.pop(url, None)
-        while len(_cache) >= CACHE_MAX: _cache.pop(next(iter(_cache)))
+        trim(_cache, CACHE_MAX, CACHE_CHARS - len(text), size=lambda h: len(h[1]))
         _cache[url] = hit = (now, text, answered)
     answered = hit[2] if len(hit) > 2 else host
     try: d = json.loads(hit[1])

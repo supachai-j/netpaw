@@ -43,3 +43,6 @@ Fixed in this PR:
 - H5-8 a query overlapping special-purpose space (IANA registries, plus deprecated site-local fec0::/10) is refused, so 172.0.0.0/8, 100.0.0.0/8, 198.0.0.0/8, 64:ff9b::/32 and fec0::1 no longer leave the host.
 - H2-6 residue: the 29 remaining Unicode Cf characters are now stripped by textclean (0 Cf characters left unstripped).
 Deferred (ROADMAP R5): H5-3 proxy timeout per call not per line; H5-4 deadline also for status line and headers; H5-6 cache memory bound by bytes; H5-7 langpolicy must scan dist/ and catch dynamic imports, net/smtp, x/sys/unix before the first non-Python server.
+
+## H5 deferred items, closed in the next PR
+H5-3 one deadline per proxy call (a child sending notifications no longer keeps a hung call alive; a mutation run of the old line fails the new test). H5-4 every fetch in rfc-lookup, wikipedia and bgp-intel runs under a wall-clock limit of TIMEOUT + 5 s that covers connect, status line and headers; the fetch thread may outlive the call until the socket timeout fires (documented in netguard.py). H5-6 caches are also bounded by total characters (bgp-intel 24M, rfc-lookup and wikipedia 12M).
