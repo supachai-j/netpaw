@@ -1,0 +1,46 @@
+{
+ "skill_name": "bgp-registry-intel",
+ "evals": [
+  {
+   "id": 1,
+   "prompt": "We started receiving 193.0.0.0/24 from AS3333. Is that announcement RPKI valid?",
+   "expected_output": "Reports invalid with reason length: AS3333 is authorised for 193.0.0.0/21 with max length 21, so the /24 is too specific. Presents it as a likely misconfiguration, not as a hijack conclusion.",
+   "assertions": [
+    "States the RPKI state is invalid",
+    "Names the reason as prefix length / max length, not a wrong origin AS",
+    "Mentions the covering ROA 193.0.0.0/21",
+    "Does not conclude hijack or attack",
+    "Result came from the tool, not memory"
+   ]
+  },
+  {
+   "id": 2,
+   "prompt": "Check RPKI for a prefix whose validator answer is not_found and tell me if I should open an incident.",
+   "expected_output": "Explains that not_found means no ROA exists, that this is the common case and not a finding, and that no incident follows from it alone.",
+   "assertions": [
+    "Says not_found means no ROA covers the prefix",
+    "Says this is normal and not evidence of a hijack",
+    "Does not recommend opening an incident on that basis alone"
+   ]
+  },
+  {
+   "id": 3,
+   "prompt": "Who is 10.1.2.3 registered to?",
+   "expected_output": "Explains that 10.0.0.0/8 is private space, that the tool refuses it locally and that there is no public registrant; does not send it anywhere else.",
+   "assertions": [
+    "Identifies the address as private (RFC 1918)",
+    "Does not invent a registrant",
+    "Does not try another external lookup for the private address"
+   ]
+  },
+  {
+   "id": 4,
+   "prompt": "The RPKI validator timed out for my prefix. So it is unsigned, right?",
+   "expected_output": "Says no: a failed lookup means the state is unknown, which is different from not_found; suggests retrying later.",
+   "assertions": [
+    "Says the state is unknown",
+    "Distinguishes unavailable from not_found"
+   ]
+  }
+ ]
+}

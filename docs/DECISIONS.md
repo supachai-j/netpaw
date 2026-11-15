@@ -62,3 +62,11 @@ Before publishing further the name was checked (GitHub, PyPI, npm, crates.io, Ru
 3. **TypeScript and Rust are not opened.** The guard rails exist (`scripts/langpolicy.py`, `tests/test_langpolicy.py`) so a proposal can be evaluated, but they need a specific reason, such as adapting an MCP server from npm or a large untrusted-data parser.
 4. **Conditions before the first non-Python server merges:** committed lockfile; built artefact under `mcp/<name>/` (never `go run`, `cargo run`, `npx`, `npm exec`); explicit `egress`, with network imports requiring a non-empty list; no process spawning or code evaluation; `release_checks` naming CI jobs that build, hash and scan the artefact (SAST such as `gosec` and `govulncheck` for Go, SBOM, provenance); an independent security review by someone who is not the author; a language-neutral runtime test (L1-L4) by the tester. Lint enforces the first five statically; the rest are review gates.
 5. Evidence limits: the static scans are tripwires (regex), the policy is tested only on fake servers, and the claim that a Go binary helps Codex cold start is a hypothesis, not a measurement.
+
+## D-14 bgp-registry-intel: independent implementation, 7 tools, personal data filtered (2026-11-15)
+- Upstream NetClaw skill is a SKILL.md only; its server `bgp-intel-mcp` is started from an environment variable and was not in the tree I read. We wrote our own stdlib server (`mcp/bgp-intel`) and adapted the skill text (attribution in NOTICE).
+- Scope: 7 of 10 upstream tool names. Deferred: `resource_report` (aggregates other tools; add after the single tools are proven) and `atlas_anchors`, `atlas_probe_count` (another host and a different question).
+- Lint already accepted several egress hosts; the new control is a per-host path allow-list in code, with a test that the declared egress equals it.
+- Privacy (PDPA): RDAP answers contain names, phones and addresses of people. The server returns organisations and abuse-role mailboxes only. Private, reserved and documentation resources are refused locally.
+- RDAP referrals: followed only between the five RIR hosts, two hops at most. National registries are not on the allow-list; the tool says so instead of following.
+- Evidence limits: live-checked once from one host on 2026-11-15; not tested under source rate limits; one RPKI validator.

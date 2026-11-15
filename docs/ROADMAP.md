@@ -1,6 +1,6 @@
 # Roadmap (next steps, ordered; evidence before claims)
 
-Status 2026-11-14: 5 skills (subnet-calculator, fwrule-analyzer, rfc-lookup, eve-lab-topology-design, wikipedia-research), all `experimental`. PRs #6-#13 merged; repository renamed to netpaw (D-12). Still open: the items below. The user-facing summary is docs/manual/roadmap.md.
+Status 2026-11-15: 6 skills (subnet-calculator, fwrule-analyzer, rfc-lookup, eve-lab-topology-design, wikipedia-research, bgp-registry-intel), all `experimental`. PRs #6-#13 merged; repository renamed to netpaw (D-12). Still open: the items below. The user-facing summary is docs/manual/roadmap.md.
 
 ## R1 - close rfc-lookup (this week)
 - [x] cross-review findings R6-1..R6-4, RL-1 (invisible/control chars stripped), RL-2 (cache cap), RL-3 (8-word limit enforced)
@@ -20,7 +20,7 @@ Status 2026-11-14: 5 skills (subnet-calculator, fwrule-analyzer, rfc-lookup, eve
 
 ## R4 - next skills (each: own review note, egress declared, offline fixtures, evals, scan, cross-review)
 1. eve-lab-topology-design + offline .unl validator (done, D-10), wikipedia-research (done, D-11)
-2. bgp-registry-intel (next) (public APIs; multi-host egress allow-list needed in lint)
+2. bgp-registry-intel (done as experimental, D-14; 7 of the upstream 10 tools; resource_report and atlas_* deferred; pending tester run, scanners and security review)
 3. network-data-analysis (PDPA risk: synthetic data only)
 Not before a server-side write gate exists: anything with `risk: write`, pyATS, vendor controllers, chat integrations.
 
