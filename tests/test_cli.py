@@ -52,7 +52,7 @@ class Cli(unittest.TestCase):
             self.assertIn("keep (modified)", u.stdout)
             self.assertTrue((proj / ".thclaws/skills/subnet-calculator/SKILL.md").exists())
             self.assertFalse((proj / ".thclaws/skills/fwrule-analyzer").exists())
-            self.assertEqual(json.loads((proj / ".thclaws/mcp.json").read_text())["mcpServers"], {})
+            self.assertFalse((proj / ".thclaws/mcp.json").exists())   # netpaw created it, so uninstall removes it (review R-2)
             self.assertEqual((proj / ".codex/config.toml").read_text() if (proj / ".codex/config.toml").exists() else "", "")  # B-1: no leftovers
             m = json.loads((h / ".netpaw/manifest.json").read_text())["installs"]            # B-6: kept file still tracked
             self.assertTrue(any(str(proj / ".thclaws/skills/subnet-calculator/SKILL.md") in r["files"] for r in m))
@@ -67,3 +67,31 @@ class Cli(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class InstallReviewR(unittest.TestCase):
+    """Review H7 R-1..R-3 (tester, release v0.2.0)."""
+    def test_r1_existing_hermes_mcp_servers_prints_paste_block(self):
+        with tempfile.TemporaryDirectory() as t:
+            cfg = pathlib.Path(t) / ".hermes" / "config.yaml"; cfg.parent.mkdir(); cfg.write_text("model: x\nmcp_servers:\n  other:\n    command: foo\n")
+            before = cfg.read_bytes()
+            r = run("install", "-a", "hermes", "-p", "minimal", "--root", str(R), "--with-mcp", "--apply", home=t)
+            self.assertIn("Paste these lines", r.stdout); self.assertIn("  subnet-calc:", r.stdout); self.assertIn("proxy.py", r.stdout)
+            self.assertEqual(cfg.read_bytes(), before); self.assertFalse(cfg.with_name("config.yaml.bak-netpaw").exists())
+
+    def test_r2_created_config_is_removed_on_uninstall(self):
+        with tempfile.TemporaryDirectory() as t:
+            r = run("install", "-a", "hermes", "-p", "minimal", "--root", str(R), "--with-mcp", "--apply", home=t)
+            cfg = pathlib.Path(t) / ".hermes" / "config.yaml"
+            self.assertTrue(cfg.exists(), r.stdout + r.stderr)
+            u = run("uninstall", "--root", str(R), "--apply", home=t)      # R-3: --root accepted
+            self.assertEqual(u.returncode, 0, u.stderr)
+            self.assertFalse(cfg.exists(), u.stdout); self.assertFalse(cfg.with_name("config.yaml.bak-netpaw").exists())
+
+    def test_r2_existing_config_is_restored_byte_for_byte(self):
+        with tempfile.TemporaryDirectory() as t:
+            cfg = pathlib.Path(t) / ".hermes" / "config.yaml"; cfg.parent.mkdir(); cfg.write_text("model: x\n")
+            run("install", "-a", "hermes", "-p", "minimal", "--root", str(R), "--with-mcp", "--apply", home=t)
+            self.assertIn("netpaw", cfg.read_text())
+            run("uninstall", "--apply", home=t)
+            self.assertEqual(cfg.read_text(), "model: x\n")
