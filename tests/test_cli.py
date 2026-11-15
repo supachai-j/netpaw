@@ -9,7 +9,7 @@ def run(*a, home, cwd=None):
 class Cli(unittest.TestCase):
     def test_basics(self):
         with tempfile.TemporaryDirectory() as t:
-            self.assertIn("netpaw 0.1.0", run("version", home=t).stdout)
+            self.assertIn("netpaw " + json.loads((R / ".claude-plugin" / "plugin.json").read_text())["version"], run("version", home=t).stdout)
             out = run("list", home=t).stdout; self.assertIn("subnet-calculator", out); self.assertIn("fwrule-analyzer", out)
             self.assertIn("NOT TESTED", run("agents", home=t).stdout)
             self.assertIn("all skills", run("profiles", home=t).stdout)
