@@ -74,8 +74,14 @@ class Evals(unittest.TestCase):
             self.assertEqual(len({x["query"] for x in q}), len(q), f"{sk.name}: duplicate queries")
     def test_no_customer_like_data_in_eval_queries(self):
         bad = re.compile(r"\b(?!0\.|255\.|10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|192\.0\.2\.|198\.51\.100\.|203\.0\.113\.)\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b")
+        # bgp-registry-intel refuses documentation ranges by design, so its evals name a fixed set of well-known public infrastructure
+        # (RIPE NCC's own prefix, two public resolvers). Nothing else is exempt, and only for that skill.
+        anchors = re.compile(r"\b(193\.0\.0\.0/2[14]|8\.8\.8\.8|8\.8\.8\.0/24|1\.1\.1\.1)(?![\d.])")
         for f in (R / "skills").glob("*/evals/*.json"):
-            self.assertFalse(bad.search(f.read_text()), f"{f}: non-documentation public IP in eval data")
+            text = f.read_text()
+            if f.parent.parent.name == "bgp-registry-intel": text = anchors.sub("ANCHOR", text)
+            self.assertFalse(bad.search(text), f"{f}: non-documentation public IP in eval data")
+        self.assertTrue(bad.search("see 193.0.0.9 and 8.8.4.4"))
 
 if __name__ == "__main__":
     unittest.main()

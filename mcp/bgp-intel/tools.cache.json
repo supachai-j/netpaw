@@ -1,0 +1,227 @@
+{
+ "serverInfo": {
+  "name": "bgp-intel",
+  "version": "1.30.0"
+ },
+ "sha256": "7eeacde9a2281006fd59d37af840a684bbc654162321fafee8d7bf1ee646d69d",
+ "tools": [
+  {
+   "annotations": {
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true,
+    "readOnlyHint": true
+   },
+   "description": "PeeringDB network record of an ASN: type, traffic level, scope, peering policy, IRR as-set. Self-reported; no record does not mean no peering.",
+   "inputSchema": {
+    "additionalProperties": false,
+    "properties": {
+     "asn": {
+      "title": "Asn",
+      "type": "string"
+     },
+     "fresh": {
+      "default": false,
+      "title": "Fresh",
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "asn"
+    ],
+    "title": "peering_networkArguments",
+    "type": "object"
+   },
+   "name": "peering_network"
+  },
+  {
+   "annotations": {
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true,
+    "readOnlyHint": true
+   },
+   "description": "Internet exchanges and facilities where an ASN lists itself in PeeringDB. Self-reported. limit 1..200.",
+   "inputSchema": {
+    "additionalProperties": false,
+    "properties": {
+     "asn": {
+      "title": "Asn",
+      "type": "string"
+     },
+     "fresh": {
+      "default": false,
+      "title": "Fresh",
+      "type": "boolean"
+     },
+     "limit": {
+      "default": 50,
+      "title": "Limit",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "asn"
+    ],
+    "title": "peering_presenceArguments",
+    "type": "object"
+   },
+   "name": "peering_presence"
+  },
+  {
+   "annotations": {
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true,
+    "readOnlyHint": true
+   },
+   "description": "Abuse mailbox published in RDAP for a public IP address, prefix or ASN. Returns mailboxes of the abuse role only.",
+   "inputSchema": {
+    "additionalProperties": false,
+    "properties": {
+     "fresh": {
+      "default": false,
+      "title": "Fresh",
+      "type": "boolean"
+     },
+     "resource": {
+      "title": "Resource",
+      "type": "string"
+     }
+    },
+    "required": [
+     "resource"
+    ],
+    "title": "registry_abuse_contactArguments",
+    "type": "object"
+   },
+   "name": "registry_abuse_contact"
+  },
+  {
+   "annotations": {
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true,
+    "readOnlyHint": true
+   },
+   "description": "RDAP registration of a public IP address, CIDR prefix or ASN (written AS3333) at the responsible RIR. Shows who it is registered to, not who announces it. Organisations only, no personal contact data.",
+   "inputSchema": {
+    "additionalProperties": false,
+    "properties": {
+     "fresh": {
+      "default": false,
+      "title": "Fresh",
+      "type": "boolean"
+     },
+     "resource": {
+      "title": "Resource",
+      "type": "string"
+     }
+    },
+    "required": [
+     "resource"
+    ],
+    "title": "registry_lookupArguments",
+    "type": "object"
+   },
+   "name": "registry_lookup"
+  },
+  {
+   "annotations": {
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true,
+    "readOnlyHint": true
+   },
+   "description": "Prefixes an ASN was seen originating by RIPE RIS collectors in the last two weeks (RIPEstat), with IPv4 and IPv6 counts. limit 1..500.",
+   "inputSchema": {
+    "additionalProperties": false,
+    "properties": {
+     "asn": {
+      "title": "Asn",
+      "type": "string"
+     },
+     "fresh": {
+      "default": false,
+      "title": "Fresh",
+      "type": "boolean"
+     },
+     "limit": {
+      "default": 100,
+      "title": "Limit",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "asn"
+    ],
+    "title": "routing_announced_prefixesArguments",
+    "type": "object"
+   },
+   "name": "routing_announced_prefixes"
+  },
+  {
+   "annotations": {
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true,
+    "readOnlyHint": true
+   },
+   "description": "Holder label of an ASN and whether RIPE RIS currently sees it announcing anything (RIPEstat).",
+   "inputSchema": {
+    "additionalProperties": false,
+    "properties": {
+     "asn": {
+      "title": "Asn",
+      "type": "string"
+     },
+     "fresh": {
+      "default": false,
+      "title": "Fresh",
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "asn"
+    ],
+    "title": "routing_as_overviewArguments",
+    "type": "object"
+   },
+   "name": "routing_as_overview"
+  },
+  {
+   "annotations": {
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": true,
+    "readOnlyHint": true
+   },
+   "description": "RPKI origin validation of a prefix and origin AS pair (RIPE NCC validator). States: valid, invalid (reason as or length), not_found. not_found is normal, not a finding. Public resources only.",
+   "inputSchema": {
+    "additionalProperties": false,
+    "properties": {
+     "fresh": {
+      "default": false,
+      "title": "Fresh",
+      "type": "boolean"
+     },
+     "origin_asn": {
+      "title": "Origin Asn",
+      "type": "string"
+     },
+     "prefix": {
+      "title": "Prefix",
+      "type": "string"
+     }
+    },
+    "required": [
+     "prefix",
+     "origin_asn"
+    ],
+    "title": "rpki_validateArguments",
+    "type": "object"
+   },
+   "name": "rpki_validate"
+  }
+ ]
+}

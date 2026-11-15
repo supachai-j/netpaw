@@ -1,0 +1,102 @@
+[
+ {
+  "query": "is 193.0.0.0/21 originated by AS3333 RPKI valid?",
+  "should_trigger": true,
+  "split": "train"
+ },
+ {
+  "query": "we see 8.8.8.0/24 from AS15169 on our transit, is that announcement authorised",
+  "should_trigger": true,
+  "split": "train"
+ },
+ {
+  "query": "who owns the IP 1.1.1.1 according to the registry",
+  "should_trigger": true,
+  "split": "train"
+ },
+ {
+  "query": "I need the abuse contact for 8.8.8.8 to report scanning",
+  "should_trigger": true,
+  "split": "train"
+ },
+ {
+  "query": "what prefixes does AS3333 announce",
+  "should_trigger": true,
+  "split": "train"
+ },
+ {
+  "query": "where does AS15169 peer, which IXPs",
+  "should_trigger": true,
+  "split": "train"
+ },
+ {
+  "query": "a new /24 showed up from an AS I do not know, 193.0.0.0/24 from AS3333 - is it legit?",
+  "should_trigger": true,
+  "split": "validation"
+ },
+ {
+  "query": "which RIR is AS13335 registered with and to whom",
+  "should_trigger": true,
+  "split": "validation"
+ },
+ {
+  "query": "what's the peering policy of AS32934",
+  "should_trigger": true,
+  "split": "validation"
+ },
+ {
+  "query": "is there a ROA for 2001:67c:2e8::/48 and AS3333",
+  "should_trigger": true,
+  "split": "validation"
+ },
+ {
+  "query": "calculate the subnets if I split 10.20.0.0/22 into four",
+  "should_trigger": false,
+  "split": "train"
+ },
+ {
+  "query": "explain how BGP path selection works",
+  "should_trigger": false,
+  "split": "train"
+ },
+ {
+  "query": "what does RFC 6811 say about NotFound routes",
+  "should_trigger": false,
+  "split": "train"
+ },
+ {
+  "query": "show me the BGP neighbors on my router R1",
+  "should_trigger": false,
+  "split": "train"
+ },
+ {
+  "query": "check this firewall rule set for shadowed rules",
+  "should_trigger": false,
+  "split": "train"
+ },
+ {
+  "query": "give me the history of the RPKI project",
+  "should_trigger": false,
+  "split": "validation"
+ },
+ {
+  "query": "write an Ansible playbook to configure eBGP on IOS-XE",
+  "should_trigger": false,
+  "split": "validation"
+ },
+ {
+  "query": "design an EVE-NG lab with two BGP route reflectors",
+  "should_trigger": false,
+  "split": "validation"
+ },
+ {
+  "query": "does 192.168.10.0/24 overlap with 192.168.8.0/22",
+  "should_trigger": false,
+  "split": "validation"
+ },
+ {
+  "query": "draft an email to our ISP asking for a second uplink",
+  "should_trigger": false,
+  "split": "train"
+ }
+]

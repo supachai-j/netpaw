@@ -122,5 +122,38 @@
     "egress": [
       "en.wikipedia.org"
     ]
+  },
+  "bgp-intel": {
+    "command": "python3",
+    "args": [
+      "{root}/mcp/_shared/proxy.py",
+      "--expect-sha256",
+      "7eeacde9a2281006fd59d37af840a684bbc654162321fafee8d7bf1ee646d69d",
+      "--cache",
+      "{root}/mcp/bgp-intel/tools.cache.json",
+      "--",
+      "uv",
+      "run",
+      "--quiet",
+      "--no-project",
+      "--isolated",
+      "--with",
+      "mcp==1.30.0",
+      "python",
+      "{root}/mcp/bgp-intel/server.py"
+    ],
+    "env": {},
+    "capability": "read",
+    "egress": [
+      "rpki-validator.ripe.net",
+      "stat.ripe.net",
+      "www.peeringdb.com",
+      "data.iana.org",
+      "rdap.db.ripe.net",
+      "rdap.arin.net",
+      "rdap.apnic.net",
+      "rdap.lacnic.net",
+      "rdap.afrinic.net"
+    ]
   }
 }

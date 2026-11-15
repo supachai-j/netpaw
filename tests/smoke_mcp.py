@@ -60,8 +60,24 @@ async def wiki():
             assert bad.isError and "page title" in bad.content[0].text, bad
             print("wikipedia ok")
 
+async def bgp():
+    e = json.loads((R/".mcp.json").read_text())["mcpServers"]["bgp-intel"]
+    assert "egress" not in e and "capability" not in e
+    args = [a.replace("${CLAUDE_PLUGIN_ROOT}", str(R)) for a in e["args"]]
+    async with stdio_client(StdioServerParameters(command=e["command"], args=args)) as (r, w):
+        async with ClientSession(r, w) as s:
+            await s.initialize()
+            tl = (await s.list_tools()).tools
+            assert len(tl) == 7 and all(t.annotations.readOnlyHint for t in tl), tl
+            bad = await s.call_tool("rpki_validate", {"prefix": "10.0.0.0/8", "origin_asn": "AS3333"})   # refused before any network access
+            assert bad.isError and "refused locally" in bad.content[0].text, bad
+            extra = await s.call_tool("registry_lookup", {"resource": "AS3333", "follow": True})
+            assert extra.isError, extra
+            print("bgp-intel ok")
+
 async def main():
     await wiki()
+    await bgp()
     await eve()
     await rfc()
     await other("fwrule", "list_supported_vendors", {"parse_policy", "analyze_firewall_rule_overlap", "list_supported_vendors", "batch_analyze_overlap"})

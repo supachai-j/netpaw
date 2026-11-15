@@ -27,6 +27,7 @@ Design goals:
 | `rfc-lookup` | Search the RFC index, fetch an RFC or a single section, with citation | `www.rfc-editor.org` only |
 | `eve-lab-topology-design` | Design an EVE-NG lab and validate exported `.unl` text: orphan nodes, dangling links, partitions, forbidden adjacencies, single points of failure | none |
 | `wikipedia-research` | Background and history of a protocol or technology, with sources and licence | `en.wikipedia.org` only |
+| `bgp-registry-intel` | RPKI origin validation, RDAP registration and abuse mailbox, prefixes an AS announces (RIPE RIS), PeeringDB peering data | 9 public registry hosts (RIPE, IANA, the five RIRs, PeeringDB) |
 
 Details, tool names and limits: [docs/manual/skills.md](docs/manual/skills.md).
 
@@ -68,7 +69,7 @@ All tools are read-only and say so (`readOnlyHint`); none needs credentials; eac
 
 ## Maturity
 
-`experimental` (all five today) → `tested` → `recommended`, each with required evidence (runtime tests, trigger evaluation, injection cases, output evaluation versus no skill). See [docs/READINESS.md](docs/READINESS.md) and measured numbers in [docs/evals/TRIGGER-RESULTS.md](docs/evals/TRIGGER-RESULTS.md). Known weak spot: a model often answers simple subnet questions from memory without calling the tool.
+`experimental` (all six today) → `tested` → `recommended`, each with required evidence (runtime tests, trigger evaluation, injection cases, output evaluation versus no skill). See [docs/READINESS.md](docs/READINESS.md) and measured numbers in [docs/evals/TRIGGER-RESULTS.md](docs/evals/TRIGGER-RESULTS.md). Known weak spot: a model often answers simple subnet questions from memory without calling the tool.
 
 ## Roadmap
 

@@ -10,6 +10,7 @@
 - `rfc-lookup` ค้นและอ่าน RFC จาก rfc-editor.org พร้อมอ้างอิง
 - `eve-lab-topology-design` ออกแบบและตรวจโครงสร้าง lab EVE-NG จากข้อความไฟล์ `.unl`
 - `wikipedia-research` หาพื้นหลังและประวัติของโปรโตคอลจาก Wikipedia พร้อมแหล่งที่มา
+- `bgp-registry-intel` ตรวจ RPKI ของคู่ prefix กับ AS ต้นทาง, ดูผู้จดทะเบียนและอีเมลแจ้ง abuse จาก RDAP, prefix ที่ AS ประกาศ (RIPE RIS) และข้อมูล peering จาก PeeringDB
 
 ทุก tool **อ่านอย่างเดียว** ไม่ใช้ credential และไม่แก้อุปกรณ์ skill ที่ใช้อินเทอร์เน็ต (`rfc-lookup`, `wikipedia-research`) ออกได้ที่ host เดียวที่ประกาศไว้
 

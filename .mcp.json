@@ -109,6 +109,27 @@
         "${CLAUDE_PLUGIN_ROOT}/mcp/wikipedia/server.py"
       ],
       "env": {}
+    },
+    "bgp-intel": {
+      "command": "python3",
+      "args": [
+        "${CLAUDE_PLUGIN_ROOT}/mcp/_shared/proxy.py",
+        "--expect-sha256",
+        "7eeacde9a2281006fd59d37af840a684bbc654162321fafee8d7bf1ee646d69d",
+        "--cache",
+        "${CLAUDE_PLUGIN_ROOT}/mcp/bgp-intel/tools.cache.json",
+        "--",
+        "uv",
+        "run",
+        "--quiet",
+        "--no-project",
+        "--isolated",
+        "--with",
+        "mcp==1.30.0",
+        "python",
+        "${CLAUDE_PLUGIN_ROOT}/mcp/bgp-intel/server.py"
+      ],
+      "env": {}
     }
   }
 }
