@@ -4,7 +4,7 @@ Fetched text is untrusted external content: it is returned as data with its sour
 Limits: 15 s timeout, 5 MB (RFC) / 4 MB (index) body cap, redirects refused, content-type must be text/plain.
 """
 from __future__ import annotations
-import os, re, sys, time, urllib.error, urllib.request
+import http.client, os, re, sys, time, urllib.error, urllib.request
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "_shared"))
 from textclean import strip_hidden
 
@@ -61,6 +61,8 @@ def _fetch(url: str, cap: int) -> str:
         raise RfcError(f"HTTP {e.code} from {HOST}") from None
     except urllib.error.URLError as e:
         raise RfcError(f"network error: {e.reason}") from None
+    except (http.client.HTTPException, TimeoutError, OSError):   # BadStatusLine and friends (tester W-5 / B-1)
+        raise RfcError("network error: malformed response or connection failure") from None
     if len(data) > cap:
         raise RfcError("response exceeds size cap")
     return data.decode("utf-8", "replace")

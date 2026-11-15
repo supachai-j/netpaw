@@ -5,7 +5,7 @@ Limits: 15 s timeout, 3 MB body cap, redirects refused (the API resolves page re
 Queries are sent to Wikipedia: do not put customer names or internal hostnames in them.
 """
 from __future__ import annotations
-import html, json, os, re, sys, time, urllib.error, urllib.parse, urllib.request
+import html, http.client, json, os, re, sys, time, urllib.error, urllib.parse, urllib.request
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "_shared"))
 from textclean import strip_hidden, flatten
 
@@ -52,6 +52,8 @@ def _fetch(url: str) -> str:
         e.close(); raise WikiError(f"HTTP {e.code} from {HOST}") from None
     except urllib.error.URLError as e:
         raise WikiError(f"network error: {e.reason}") from None
+    except (http.client.HTTPException, TimeoutError, OSError):   # BadStatusLine and friends (tester W-5 / B-1)
+        raise WikiError("network error: malformed response or connection failure") from None
     if len(data) > MAX_BYTES: raise WikiError("response exceeds size cap")
     return data.decode("utf-8", "replace")
 
