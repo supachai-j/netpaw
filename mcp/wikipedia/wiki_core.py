@@ -8,6 +8,7 @@ from __future__ import annotations
 import html, http.client, json, os, re, sys, time, urllib.error, urllib.parse, urllib.request
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "_shared"))
 from textclean import strip_hidden, flatten
+from netguard import with_deadline, trim
 
 HOST = "en.wikipedia.org"
 API = f"https://{HOST}/w/api.php"
@@ -18,6 +19,7 @@ LICENSE = "Text from Wikipedia, CC BY-SA 4.0; attribute Wikipedia and link the s
 _TAG = re.compile(r"<[^>]*>")
 _cache: dict[str, str] = {}
 CACHE_MAX = 16
+CACHE_CHARS = 12_000_000      # total characters kept (review H5-6)
 
 
 class WikiError(ValueError):
@@ -42,6 +44,10 @@ def _read(r, limit: int) -> bytes:
 
 def _fetch(url: str) -> str:
     if not url.startswith(API + "?"): raise WikiError("refused: URL outside allow-list")
+    return with_deadline(lambda: _fetch_once(url), TIMEOUT + 5, WikiError("response too slow (overall timeout, including headers)"))
+
+
+def _fetch_once(url: str) -> str:
     req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept": "application/json"})
     try:
         with urllib.request.build_opener(_NoRedirect).open(req, timeout=TIMEOUT) as r:
@@ -63,7 +69,7 @@ def _api(**params) -> dict:
     url = f"{API}?{q}"
     if url not in _cache:
         text = _fetch(url)
-        while len(_cache) >= CACHE_MAX: _cache.pop(next(iter(_cache)))
+        trim(_cache, CACHE_MAX, CACHE_CHARS - len(text))
         _cache[url] = text
     try: d = json.loads(_cache[url])
     except (ValueError, RecursionError): raise WikiError("response was not valid JSON") from None

@@ -7,6 +7,7 @@ from __future__ import annotations
 import http.client, os, re, sys, time, urllib.error, urllib.request
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "_shared"))
 from textclean import strip_hidden
+from netguard import with_deadline, trim
 
 HOST = "www.rfc-editor.org"
 TIMEOUT = 15
@@ -15,12 +16,13 @@ MAX_INDEX_BYTES = 4_000_000
 UA = "netpaw-rfc-lookup/0.1 (+https://github.com/supachai-j/netpaw)"
 _cache: dict[str, str] = {}   # in-memory only; nothing is written to disk
 CACHE_MAX = 16                # entries (each up to 5 MB); oldest dropped first
+CACHE_CHARS = 12_000_000      # total characters kept (review H5-6)
 
 
 def _cached(url: str, cap: int) -> str:
     if url not in _cache:
         text = _fetch(url, cap)
-        while len(_cache) >= CACHE_MAX: _cache.pop(next(iter(_cache)))
+        trim(_cache, CACHE_MAX, CACHE_CHARS - len(text))
         _cache[url] = text
     return _cache[url]
 
@@ -48,6 +50,10 @@ def _read(r, limit: int) -> bytes:
 def _fetch(url: str, cap: int) -> str:
     if not url.startswith(f"https://{HOST}/"):
         raise RfcError("refused: URL outside allow-list")
+    return with_deadline(lambda: _fetch_once(url, cap), TIMEOUT + 5, RfcError("response too slow (overall timeout, including headers)"))
+
+
+def _fetch_once(url: str, cap: int) -> str:
     opener = urllib.request.build_opener(_NoRedirect)
     req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept": "text/plain"})
     try:

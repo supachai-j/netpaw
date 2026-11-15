@@ -19,7 +19,7 @@ Usage: proxy.py [--expect-sha256 HEX] [--reject-xml-declarations] [--set-env K=V
 
 Shared by every server (mcp/<name>/tools.cache.json); fwrule additionally uses --reject-xml-declarations and --set-env FOMC_MAX_RULESET_BYTES=...
 """
-import hashlib, json, os, queue, re, subprocess, sys, threading
+import hashlib, json, os, queue, re, subprocess, sys, threading, time
 
 ALLOWED_ENV = ("PATH", "HOME", "LANG", "LC_ALL", "TMPDIR", "XDG_CACHE_HOME", "XDG_DATA_HOME", "SSL_CERT_FILE", "SSL_CERT_DIR",
                "USER", "LOGNAME", "UV_CACHE_DIR", "UV_PYTHON_INSTALL_DIR", "UV_PYTHON", "UV_NO_PROGRESS", "UV_OFFLINE")
@@ -69,8 +69,9 @@ class Child:
     def call(self, method, params=None, timeout=CALL_TIMEOUT):
         self.n += 1; rid = f"p{self.n}"
         self._write({"jsonrpc": "2.0", "id": rid, "method": method, **({"params": params} if params is not None else {})})
+        end = time.monotonic() + timeout      # H5-3: one deadline for the whole call; notifications from the child do not extend it
         while True:
-            try: line = self.q.get(timeout=timeout)
+            try: line = self.q.get(timeout=max(0.0, end - time.monotonic()))
             except queue.Empty: self.kill(); raise TimeoutError(f"child did not answer {method} within {timeout:.0f}s")
             if line is None: raise RuntimeError("child exited")
             try: m = json.loads(line)

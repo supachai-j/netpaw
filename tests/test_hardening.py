@@ -233,3 +233,64 @@ class ProxyDeepJson(unittest.TestCase):
         p = subprocess.run([sys.executable, str(P), "--cache", str(cache), "--", "true"], input=deep + "\n" + json.dumps(init) + "\n" + json.dumps(lst) + "\n", capture_output=True, text=True, timeout=30)
         out = [json.loads(l) for l in p.stdout.splitlines()]
         self.assertIn(out[0]["error"]["code"], (-32700, -32600)); self.assertEqual(out[-1]["id"], 2)   # parse error or invalid request depending on the json recursion limit of this Python; self.assertIn("tools", out[-1]["result"])
+
+
+class Review5Deferred(unittest.TestCase):
+    def test_h5_3_notifications_do_not_extend_a_call(self):
+        import subprocess, time as _t
+        P = R / "mcp" / "_shared" / "proxy.py"; cache = R / "mcp" / "wikipedia" / "tools.cache.json"
+        chatty = ("import json,sys,time\n"
+                  "for l in sys.stdin:\n"
+                  " m=json.loads(l)\n"
+                  " if m.get('method')=='initialize': print(json.dumps({'jsonrpc':'2.0','id':m['id'],'result':{'protocolVersion':'2025-03-26','capabilities':{},'serverInfo':{'name':'c','version':'0'}}}),flush=True)\n"
+                  " elif m.get('method')=='tools/list': print(json.dumps({'jsonrpc':'2.0','id':m['id'],'result':{'tools':json.load(open(sys.argv[1]))['tools']}}),flush=True)\n"
+                  " elif m.get('method')=='tools/call':\n"
+                  "  while True: print(json.dumps({'jsonrpc':'2.0','method':'notifications/progress','params':{}}),flush=True); time.sleep(0.2)\n")
+        import tempfile, os
+        with tempfile.TemporaryDirectory() as t:
+            f = pathlib.Path(t) / "c.py"; f.write_text(chatty)
+            msgs = [{"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": "2025-03-26", "capabilities": {}, "clientInfo": {"name": "t", "version": "0"}}},
+                    {"jsonrpc": "2.0", "id": 2, "method": "tools/call", "params": {"name": "get_summary", "arguments": {"page": "OSPF"}}}]
+            env = dict(os.environ, NETPAW_PROXY_CALL_TIMEOUT="2")
+            t0 = _t.monotonic()
+            p = subprocess.run([sys.executable, str(P), "--cache", str(cache), "--", sys.executable, str(f), str(cache)], input="\n".join(json.dumps(m) for m in msgs) + "\n",
+                               capture_output=True, text=True, timeout=40, env=env)
+            out = {json.loads(l)["id"]: json.loads(l) for l in p.stdout.splitlines() if '"id"' in l}
+            self.assertIn("error", out[2]); self.assertIn("did not answer", json.dumps(out[2])); self.assertLess(_t.monotonic() - t0, 20)
+
+    def test_h5_4_deadline_covers_slow_headers(self):
+        import socket, threading, time as _t
+        sys.path.insert(0, str(R / "mcp" / "_shared")); import netguard
+        def slow(): _t.sleep(5); return "late"
+        t0 = _t.monotonic()
+        with self.assertRaises(TimeoutError): netguard.with_deadline(slow, 0.5, TimeoutError("x"))
+        self.assertLess(_t.monotonic() - t0, 2)
+        self.assertEqual(netguard.with_deadline(lambda: 7, 1, TimeoutError()), 7)
+        with self.assertRaises(KeyError): netguard.with_deadline(lambda: {}["x"], 1, TimeoutError())
+        # real dripping peer against urllib through wiki_core's opener path (status line one byte every 0.3 s)
+        sys.path.insert(0, str(R / "mcp" / "wikipedia")); import wiki_core
+        srv = socket.socket(); srv.bind(("127.0.0.1", 0)); srv.listen(1); port = srv.getsockname()[1]
+        def drip():
+            c, _ = srv.accept()
+            try:
+                for ch in b"HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n":
+                    c.send(bytes([ch])); _t.sleep(0.3)
+            except OSError: pass
+            finally: c.close()
+        threading.Thread(target=drip, daemon=True).start()
+        old = (wiki_core.TIMEOUT,); wiki_core.TIMEOUT = 1
+        try:
+            t0 = _t.monotonic()
+            with self.assertRaises(wiki_core.WikiError):
+                wiki_core.with_deadline(lambda: wiki_core.urllib.request.urlopen(f"http://127.0.0.1:{port}/", timeout=wiki_core.TIMEOUT).read(), wiki_core.TIMEOUT + 1, wiki_core.WikiError("slow"))
+            self.assertLess(_t.monotonic() - t0, 5)
+        finally: wiki_core.TIMEOUT = old[0]; srv.close()
+
+    def test_h5_6_cache_is_bounded_by_size(self):
+        sys.path.insert(0, str(R / "mcp" / "_shared")); import netguard
+        c = {}
+        for i in range(10):
+            netguard.trim(c, 64, 1000 - 300); c[i] = "x" * 300
+        self.assertLessEqual(sum(map(len, c.values())), 1000); self.assertEqual(list(c)[-1], 9)
+        sys.path.insert(0, str(R / "mcp" / "bgp-intel")); import bgp_core
+        self.assertLessEqual(bgp_core.CACHE_CHARS, 32_000_000)

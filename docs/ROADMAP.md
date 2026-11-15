@@ -28,7 +28,7 @@ Not before a server-side write gate exists: anything with `risk: write`, pyATS, 
 - [ ] B-3: MCP config points at a stable install dir, not a checkout
 - [x] PX-7: the proxy takes `--expect-sha256` pinned in mcp/servers.json (lint compares it with the cache); CODEOWNERS already covers /mcp/
 - [ ] fuzz the fwrule XML parser
-- [ ] H5-3 proxy call timeout per call (notifications must not keep a hung call alive); H5-4 overall deadline including status line and headers (bgp/rfc/wiki); H5-6 cache bounded by bytes, not entries
+- [x] H5-3 proxy call timeout per call; H5-4 wall-clock deadline including connect, status line and headers (mcp/_shared/netguard.py); H5-6 caches bounded by total characters as well as entries
 - [ ] H5-7 before the first non-Python server: langpolicy scans dist/, catches dynamic import, Go net/smtp and x/sys/unix
 - [ ] add Cisco Skill Scanner (and SkillSpector after vetting its maintainers) as a scheduled CI job on a pinned version
 - [ ] update docs/CONFORMANCE.md SHAs after the history rewrite
