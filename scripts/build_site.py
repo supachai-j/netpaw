@@ -8,8 +8,9 @@ from common import ROOT
 PAGES = [("index", "Overview"), ("getting-started", "Getting started"), ("using", "Using the skills"), ("skills", "Skill catalog"),
          ("concepts", "Concepts"), ("agents", "Supported agents"), ("safety", "Safety"), ("develop", "Develop"),
          ("troubleshoot", "Troubleshooting"), ("roadmap", "Roadmap")]
-TH_PAGES = [("index", "ภาพรวม"), ("install", "ติดตั้ง"), ("using", "วิธีใช้"), ("skills", "Skill / Tool"), ("safety", "ความปลอดภัย"),
-            ("develop", "พัฒนา"), ("compat", "ความเข้ากันได้"), ("troubleshoot", "แก้ปัญหา")]
+TH_PAGES = [("index", "ภาพรวม"), ("getting-started", "เริ่มต้นใช้งาน"), ("using", "วิธีใช้ skill"), ("skills", "รายการ skill"),
+            ("concepts", "แนวคิด"), ("agents", "Agent ที่รองรับ"), ("safety", "ความปลอดภัย"), ("develop", "พัฒนา"),
+            ("troubleshoot", "แก้ปัญหา"), ("roadmap", "แผนงาน")]
 CSS = """
 :root{--bg:#0f1419;--fg:#e6edf3;--mut:#8b98a5;--acc:#4fc3f7;--card:#161d26;--bd:#2a3441;--warn:#f0b429}
 @media(prefers-color-scheme:light){:root{--bg:#fff;--fg:#1c2733;--mut:#5b6b7b;--acc:#0b6bcb;--card:#f4f7fa;--bd:#d6dde4;--warn:#9a6700}}
