@@ -3,8 +3,9 @@
 Egress: HTTPS GET to the hosts and path prefixes in ALLOW, nothing else. Redirects are refused, except an RDAP referral from one
 allow-listed registry to another (at most 2 hops, each re-checked against ALLOW).
 Everything returned is untrusted external text: data, never instructions. Hidden characters are stripped and strings are capped.
-Privacy: private, reserved and documentation resources are refused locally, before any request leaves. Registry contact data is
-filtered: no person names, phone numbers or postal addresses are returned; the abuse lookup returns the abuse mailbox only.
+Privacy: private, reserved and documentation resources (and anything overlapping them) are refused locally, before any request leaves.
+Contact records of individuals (vCard name, email, phone, address) are dropped; abuse mailboxes of individuals are not returned; phone-like
+digit runs in free text are masked. Free-text fields (object names, organisation names, holder labels) can still contain a person's name.
 Politeness: requests are serial, at least 0.25 s apart per host (3.1 s for PeeringDB, 20 requests/minute anonymous), and cached per source (RPKI 5 min, everything else 1 h to 24 h).
 """
 from __future__ import annotations
@@ -55,8 +56,21 @@ class _NoRedirect(urllib.request.HTTPRedirectHandler):
         return None
 
 
+_PHONE = re.compile(r"(?<![\w.])\+?\d[\d ()./-]{6,}\d(?![\w.])")
+
+
 def _s(v, n=200) -> str:
     return flatten(v)[:n].strip() if isinstance(v, (str, int, float)) and not isinstance(v, bool) else ""
+
+
+def _t(v, n=200) -> str:
+    """Free text from a registry (names, holder labels): phone-number-like digit runs are masked (H5-1). Names of people cannot be detected."""
+    def mask(m):
+        t = m.group(0)
+        if sum(ch.isdigit() for ch in t) < 8 or re.fullmatch(r"\d{4}-\d{2}-\d{2}", t) or re.search(r"\d{1,3}(\.\d{1,3}){3}", t): return t   # dates and anything carrying an IPv4 address
+
+        return "[number removed]"
+    return _PHONE.sub(mask, _s(v, n))
 
 
 def allowed(url: str) -> bool:
@@ -161,12 +175,24 @@ def _embedded_v4(net):
     return a.sixtofour or (a.teredo[1] if a.teredo else None)
 
 
+# IANA special-purpose registries (RFC 6890 and updates) plus deprecated site-local: a query that overlaps any of them is refused (H5-8)
+_SPECIAL = tuple(ipaddress.ip_network(x) for x in (
+    "0.0.0.0/8", "10.0.0.0/8", "100.64.0.0/10", "127.0.0.0/8", "169.254.0.0/16", "172.16.0.0/12", "192.0.0.0/24", "192.0.2.0/24", "192.88.99.0/24",
+    "192.168.0.0/16", "198.18.0.0/15", "198.51.100.0/24", "203.0.113.0/24", "224.0.0.0/4", "240.0.0.0/4",
+    "::/128", "::1/128", "::ffff:0:0/96", "64:ff9b:1::/48", "100::/64", "2001::/23", "2001:db8::/32", "2002::/16", "3fff::/20", "5f00::/16",
+    "fc00::/7", "fe80::/10", "fec0::/10", "ff00::/8"))
+_GLOBAL_EXCEPTIONS = tuple(ipaddress.ip_network(x) for x in ("2001:4:112::/48", "2001:20::/28", "2001:30::/28", "2001:3::/32", "2001:1::1/128", "2001:1::2/128"))
+
+
 def _public(net) -> None:
     # ip_network.is_global is true for a supernet such as 0.0.0.0/0 that contains private space, so both ends and the length are checked too
     short = net.prefixlen < (8 if net.version == 4 else 16)
     v4 = _embedded_v4(net) if net.version == 6 else None
     if v4 is not None and not v4.is_global:
         raise BgpError(f"{net} carries the IPv4 address {v4}, which is private or reserved; refused locally (nothing was sent to a public registry)")
+    hits = [s for s in _SPECIAL if s.version == net.version and net.overlaps(s) and not any(net.subnet_of(g) for g in _GLOBAL_EXCEPTIONS if g.version == net.version)]
+    if hits and not (net.version == 6 and v4 is not None):
+        raise BgpError(f"{net} overlaps special-purpose space {hits[0]}; refused locally (nothing was sent to a public registry). Ask about a more specific public prefix.")
     if short or not net.is_global or net.is_multicast or not net.network_address.is_global or not net.broadcast_address.is_global:
         raise BgpError(f"{net} is private, reserved, documentation or multicast space; refused locally (nothing was sent to a public registry)")
 
@@ -288,9 +314,9 @@ def registry_lookup(res, fresh: bool = False) -> dict:
     for e in _entities(d):
         vc = _vcard(e)
         if _s(vc.get("kind"), 20).lower() == "org" and _s(vc.get("fn")):   # organisations only; individuals and role groups are dropped
-            o = {"name": _s(vc.get("fn"), 120), "handle": _s(e.get("handle"), 60), "roles": [_s(r, 30) for r in _l(e.get("roles"))[:6]]}
+            o = {"name": _t(vc.get("fn"), 120), "handle": _s(e.get("handle"), 60), "roles": [_s(r, 30) for r in _l(e.get("roles"))[:6]]}
             if o not in orgs: orgs.append(o)
-    data = {"query": _q(kind, v), "handle": _s(d.get("handle"), 80), "name": _s(d.get("name"), 120), "type": _s(d.get("type"), 60),
+    data = {"query": _q(kind, v), "handle": _s(d.get("handle"), 80), "name": _t(d.get("name"), 120), "type": _s(d.get("type"), 60),
             "country": _s(d.get("country"), 8), "status": [_s(x, 40) for x in _l(d.get("status"))[:6]],
             "events": [{"action": _s(_d(x).get("eventAction"), 40), "date": _s(_d(x).get("eventDate"), 40)} for x in _l(d.get("events"))[:6]],
             "organisations": orgs[:10]}
@@ -307,14 +333,17 @@ _EMAIL = re.compile(r"[A-Za-z0-9._%+-]{1,64}@[A-Za-z0-9.-]{1,190}\.[A-Za-z]{2,24
 @_safe
 def registry_abuse_contact(res, fresh: bool = False) -> dict:
     kind, v, d, meta = _rdap(res, fresh)
-    found = []
+    found, personal = [], 0
     for e in _entities(d):
         if "abuse" in [_s(r, 30).lower() for r in _l(e.get("roles"))]:
-            mail = _s(_vcard(e).get("email"), 254)
+            vc = _vcard(e)
+            if _s(vc.get("kind"), 20).lower() == "individual": personal += 1; continue    # H5-1: a person's own mailbox is not returned
+            mail = _s(vc.get("email"), 254)
             if _EMAIL.fullmatch(mail) and mail not in found: found.append(mail)
     data = {"query": _q(kind, v), "registered_object": _s(d.get("handle"), 80), "abuse_mailboxes": found[:5]}
-    caveats = ["Only mailboxes of entities with the RDAP role 'abuse' are returned; no person names or phone numbers.",
+    caveats = ["Only mailboxes of role or organisation entities with the RDAP role 'abuse' are returned; a mailbox may still belong to one person at small holders.",
                "The mailbox is registry data and unverified. Use it for abuse reports about this resource, nothing else."]
+    if personal: caveats.insert(0, f"{personal} abuse contact(s) registered as an individual were not returned (personal data). The user can look them up at the registry directly.")
     if not found: caveats.insert(0, "No abuse contact is published on this object. Try the covering allocation (parent) with registry_lookup.")
     return {**meta, "outcome": "ok" if found else "no_record", "data": data, "caveats": caveats}
 
@@ -330,8 +359,8 @@ def _stat(call: str, n: int, fresh: bool):
 def routing_as_overview(a, fresh: bool = False) -> dict:
     n = asn(a); d, meta = _stat("as-overview", n, fresh)
     blk = _d(d.get("block"))
-    data = {"asn": f"AS{n}", "holder": _s(d.get("holder"), 200), "announced": d.get("announced") if isinstance(d.get("announced"), bool) else None,
-            "iana_block": {"range": _s(blk.get("resource"), 40), "description": _s(blk.get("desc"), 120)}}
+    data = {"asn": f"AS{n}", "holder": _t(d.get("holder"), 200), "announced": d.get("announced") if isinstance(d.get("announced"), bool) else None,
+            "iana_block": {"range": _s(blk.get("resource"), 40), "description": _t(blk.get("desc"), 120)}}
     return {**meta, "outcome": "ok", "data": data, "caveats": C_STAT + ["holder is a registry label, not proof of who operates the network today."]}
 
 
@@ -376,7 +405,7 @@ def peering_network(a, fresh: bool = False) -> dict:
     n = asn(a); row, meta = _pdb(n, False, fresh)
     if row is None: return {**meta, "outcome": "no_record", "data": {"asn": f"AS{n}"}, "caveats": C_PDB}
     num = lambda k: row.get(k) if isinstance(row.get(k), int) and not isinstance(row.get(k), bool) else None
-    data = {"asn": f"AS{n}", "name": _s(row.get("name"), 120), "aka": _s(row.get("aka"), 120), "website": _web(row.get("website")), "irr_as_set": _s(row.get("irr_as_set"), 200),
+    data = {"asn": f"AS{n}", "name": _t(row.get("name"), 120), "aka": _t(row.get("aka"), 120), "website": _web(row.get("website")), "irr_as_set": _s(row.get("irr_as_set"), 200),
             "network_type": _s(row.get("info_type"), 40), "traffic": _s(row.get("info_traffic"), 40), "ratio": _s(row.get("info_ratio"), 40), "scope": _s(row.get("info_scope"), 40),
             "prefixes_ipv4": num("info_prefixes4"), "prefixes_ipv6": num("info_prefixes6"), "peering_policy": _s(row.get("policy_general"), 40),
             "ix_count": num("ix_count"), "facility_count": num("fac_count"), "record_updated": _s(row.get("updated"), 40)}
@@ -393,6 +422,6 @@ def peering_presence(a, limit: int = 50, fresh: bool = False) -> dict:
            "ipv6": _s(_d(x).get("ipaddr6"), 50), "route_server_peer": _d(x).get("is_rs_peer") is True, "operational": _d(x).get("operational") is not False} for x in _l(row.get("netixlan_set"))]
     # depth=2 also brings poc_set (contact records); it is never read or returned
     fac = [{"facility": _s(_d(x).get("name"), 120), "city": _s(_d(x).get("city"), 80), "country": _s(_d(x).get("country"), 8)} for x in _l(row.get("netfac_set"))]
-    data = {"asn": f"AS{n}", "name": _s(row.get("name"), 120), "exchange_count": len(ix), "facility_count": len(fac), "exchanges": ix[:limit], "facilities": fac[:limit],
+    data = {"asn": f"AS{n}", "name": _t(row.get("name"), 120), "exchange_count": len(ix), "facility_count": len(fac), "exchanges": ix[:limit], "facilities": fac[:limit],
             "truncated": len(ix) > limit or len(fac) > limit}
     return {**meta, "outcome": "ok", "data": data, "caveats": C_PDB}

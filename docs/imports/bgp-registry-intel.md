@@ -34,3 +34,12 @@ Acceptance pack by the tester (73 tests, written before seeing the code): 9 fail
 - B-7 RIPEstat requests carry `sourceapp=netpaw` as RIPE asks.
 - Docs D-1..D-4 (tester part 2): SKILL.md now names the embedded-IPv4 refusal and the supernet limit; this note names the upstream server's location; the manual says PeeringDB contacts are "not returned" rather than "not requested"; pacing text matches the code.
 - Tester part 2 on 23c44d1: Codex first session listed all 6 servers in 6/6 fresh homes; thClaws and OpenClaw called rpki_validate; Cisco skill-scanner 0 findings and SkillSpector 0/100 on the skill folder; server-code findings were the declared registry calls.
+
+## Security review H5 (reviewer, commit 59b0997): blocks merge = no
+Fixed in this PR:
+- H5-1 PDPA wording was stronger than the code. Now: abuse mailboxes of `kind: individual` entities are withheld (the caveat says how many); phone-like digit runs (8+ digits, not dates or IPv4) in free text are masked; docs say plainly that free-text names can still contain a person's name.
+- H5-2 the shared proxy exited on one deeply nested JSON line (RecursionError). Now a parse error; the proxy keeps serving. Test: tests/test_hardening.py ProxyDeepJson.
+- H5-5 "Honors HTTPS_PROXY" was false behind the shared proxy (env allow-list). Docs of bgp-registry-intel, rfc-lookup and wikipedia-research now say the server connects directly; the proxy comment about overriding FOMC_* is corrected.
+- H5-8 a query overlapping special-purpose space (IANA registries, plus deprecated site-local fec0::/10) is refused, so 172.0.0.0/8, 100.0.0.0/8, 198.0.0.0/8, 64:ff9b::/32 and fec0::1 no longer leave the host.
+- H2-6 residue: the 29 remaining Unicode Cf characters are now stripped by textclean (0 Cf characters left unstripped).
+Deferred (ROADMAP R5): H5-3 proxy timeout per call not per line; H5-4 deadline also for status line and headers; H5-6 cache memory bound by bytes; H5-7 langpolicy must scan dist/ and catch dynamic imports, net/smtp, x/sys/unix before the first non-Python server.

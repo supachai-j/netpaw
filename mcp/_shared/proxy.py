@@ -50,7 +50,7 @@ def err(i, code, msg): return {"jsonrpc": "2.0", "id": i, "error": {"code": code
 class Child:
     def __init__(self, argv, init_params, extra_env=None):
         env = {k: v for k, v in os.environ.items() if k in ALLOWED_ENV}
-        for k, v in (extra_env or {}).items(): env.setdefault(k, v)   # values pinned in the registry; the user may override by setting the variable
+        for k, v in (extra_env or {}).items(): env.setdefault(k, v)   # values pinned in the registry; not user-overridable (the variable is not in ALLOWED_ENV)
         self.p = subprocess.Popen(argv, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=sys.stderr, env=env, text=True, bufsize=1)
         self.q = queue.Queue(); self.n = 0
         threading.Thread(target=self._reader, daemon=True).start()
@@ -74,7 +74,7 @@ class Child:
             except queue.Empty: self.kill(); raise TimeoutError(f"child did not answer {method} within {timeout:.0f}s")
             if line is None: raise RuntimeError("child exited")
             try: m = json.loads(line)
-            except ValueError: continue
+            except (ValueError, RecursionError): continue      # H5-2: deeply nested JSON must not kill the proxy
             if not isinstance(m, dict): continue
             if m.get("id") == rid and ("result" in m or "error" in m): return m
             if "method" in m and "id" in m:   # server->client request: we support none
@@ -123,7 +123,7 @@ def main():
         line = line.strip()
         if not line: continue
         try: m = json.loads(line)
-        except ValueError: send(err(None, -32700, "parse error")); continue
+        except (ValueError, RecursionError): send(err(None, -32700, "parse error")); continue      # H5-2
         if not isinstance(m, dict) or not isinstance(m.get("method"), str):
             send(err(m.get("id") if isinstance(m, dict) else None, -32600, "invalid request (batches/non-requests are not supported)")); continue
         i, method, params = m.get("id"), m["method"], m.get("params")

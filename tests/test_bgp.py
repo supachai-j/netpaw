@@ -113,6 +113,27 @@ class TesterFindings(Base):
         finally: core._http = fake
 
 
+class SecurityReviewH5(Base):
+    def test_h5_8_overlapping_special_space_is_refused(self):
+        for p in ("172.0.0.0/8", "100.0.0.0/8", "198.0.0.0/8", "192.0.0.0/16", "64:ff9b::/32", "fec0::1/128", "fec0::/10", "2001::/16", "3fff::/20"):
+            with self.assertRaises(core.BgpError, msg=p): core.rpki_validate(p, "AS3333")
+        for p in ("193.0.0.0/21", "8.8.8.0/24", "2001:67c:2e8::/48", "64:ff9b::808:808/128", "100.128.0.0/9", "2001:4860::/32"):
+            core.prefix(p)
+        self.assertEqual(calls, [])
+    def test_h5_1_individual_abuse_and_phone_masking(self):
+        rdap = json.loads(json.dumps(RDAP)); rdap["name"] = "SOMCHAI-HOME-0812345678"
+        rdap["entities"].append({"handle": "P1", "roles": ["abuse"], "vcardArray": vc("individual", "Person", "person.private@example.com")})
+        rdap["entities"].append({"handle": "O2", "roles": ["registrant"], "vcardArray": vc("org", "Example ISP (call +66 2 123 4567)")})
+        core._http = lambda url, hops=0: json.dumps(rdap) if "data.iana" not in url else fake(url)
+        try:
+            r = core.registry_lookup("193.0.0.1"); blob = json.dumps(r)
+            self.assertNotIn("0812345678", blob); self.assertNotIn("123 4567", blob); self.assertIn("[number removed]", blob)
+            core._cache.clear(); a = core.registry_abuse_contact("193.0.0.1")
+            self.assertNotIn("person.private", json.dumps(a)); self.assertEqual(a["data"]["abuse_mailboxes"], ["abuse@example.org"]); self.assertIn("individual", a["caveats"][0])
+        finally: core._http = fake
+        for keep in ("AS3333", "2026-11-15", "193.0.0.0/21", "RIPE-NCC-AS 3333"): self.assertEqual(core._t(keep), keep)
+
+
 class LocalRefusal(Base):
     def test_private_reserved_and_documentation_never_leave(self):
         for p in ("10.0.0.0/8", "192.168.1.0/24", "172.16.0.0/12", "100.64.0.0/10", "192.0.2.0/24", "198.51.100.0/24", "203.0.113.0/24", "169.254.0.0/16", "127.0.0.0/8", "224.0.0.0/4",
