@@ -1,6 +1,6 @@
 {
   "name": "netpaw",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Network-engineer skills and read-only MCP tools, portable across agent runtimes",
   "license": "Apache-2.0",
   "keywords": [
