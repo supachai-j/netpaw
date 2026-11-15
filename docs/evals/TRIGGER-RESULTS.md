@@ -26,3 +26,6 @@ The 2 train misses are queries that mention a .unl file but contain no actual co
 | wikipedia-research | + "always when they name Wikipedia or ask for sources" | 7/12 | 6/8 |
 
 wikipedia-research stays weak: general background questions are answered from memory (0 false positives). Even some prompts that name Wikipedia did not call the tool in a single run; not investigated further. The skill may add little for well-known protocols; its value is citable, fetched sources, which the output eval must show before any claim beyond "experimental".
+| bgp-registry-intel | "Use this skill when" description (commit 0a50384) | 12/12 | 8/8 |
+
+bgp-registry-intel: 1 run per query, so read it as a range (other skills moved by about 2 queries between identical runs). All 10 should-not-trigger queries passed, including near misses (BGP theory, RFC 6811 text, RPKI history, router BGP neighbors). The queries name concrete prefixes and AS numbers, which makes them easier than real prompts; the "tested" level still needs 3 runs per query.
