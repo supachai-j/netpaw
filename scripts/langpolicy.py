@@ -14,23 +14,25 @@ import re
 
 LANGS = {
     "go": {"ext": (".go",), "lock": "go.sum",
-           "net": r'"(net|net/http|net/rpc|crypto/tls|golang\.org/x/net[^"]*|google\.golang\.org/grpc[^"]*|github\.com/(gorilla/websocket|go-resty/resty)[^"]*)"',
-           "proc": r'"(os/exec|syscall)"|\bexec\.Command\w*\('},
+           "net": r'"(net|net/(http|rpc|smtp|textproto)[^"]*|crypto/tls|golang\.org/x/net[^"]*|google\.golang\.org/grpc[^"]*|github\.com/(gorilla/websocket|go-resty/resty)[^"]*)"',
+           "proc": r'"(os/exec|syscall|plugin|golang\.org/x/sys/(unix|windows)[^"]*)"|\bexec\.Command\w*\('},
     "rust": {"ext": (".rs",), "lock": "Cargo.lock",
              "net": r"\b(std::net|tokio::net|reqwest|hyper|ureq|isahc|surf|tonic|tungstenite|socket2|curl)\b",
-             "proc": r"\b(std::process|tokio::process|Command::new)\b"},
+             "proc": r"\b(std::process|tokio::process|Command::new|libc::(execv\w*|fork|system|posix_spawn\w*)|nix::unistd)\b"},
     "typescript": {"ext": (".ts", ".js", ".mjs", ".cjs", ".mts"), "lock": "package-lock.json",
-                   "net": r"""(?:from\s+|require\()\s*['"](?:node:)?(?:http|https|http2|net|tls|dgram|dns|undici|axios|got|node-fetch|ws|superagent|request)['"]|\bfetch\s*\(|\bXMLHttpRequest\b|\bWebSocket\b""",
-                   "proc": r"""(?:from\s+|require\()\s*['"](?:node:)?(?:child_process|worker_threads|cluster)['"]|\beval\s*\(|\bnew\s+Function\s*\("""},
+                   "net": r"""(?:from\s+|require\(|import\()\s*['"](?:node:)?(?:http|https|http2|net|tls|dgram|dns|undici|axios|got|node-fetch|ws|superagent|request)['"]|\bfetch\s*\(|\bXMLHttpRequest\b|\bWebSocket\b""",
+                   # dynamic import() / require() of a non-literal hides what is loaded, so it counts as code evaluation (review H5-7)
+                   "proc": r"""(?:from\s+|require\(|import\()\s*['"](?:node:)?(?:child_process|worker_threads|cluster|vm)['"]|\beval\s*\(|\bnew\s+Function\s*\(|\b(?:import|require)\s*\(\s*(?!['"])"""},
 }
 BANNED_CMD = re.compile(r"(^|/)(npx|bunx|pnpx|pnpm|yarn|deno|go|cargo|npm|bun)$")
 BANNED_ARGS = {"run", "dlx", "exec", "install", "x", "-y", "--yes", "-p"}
 SKIP = {"node_modules", "target", "vendor", ".git", "dist", "bin", "build"}
+SKIP_TS = SKIP - {"dist", "build"}     # for TypeScript the built .js under dist/ is what node runs, so it is scanned too (review H5-7)
 
 
 def sources(d, lang):
-    exts = LANGS[lang]["ext"]
-    return [p for p in d.rglob("*") if p.is_file() and p.suffix in exts and not (SKIP & set(p.relative_to(d).parts))]
+    exts, skip = LANGS[lang]["ext"], (SKIP_TS if lang == "typescript" else SKIP)
+    return [p for p in d.rglob("*") if p.is_file() and p.suffix in exts and not (skip & set(p.relative_to(d).parts))]
 
 
 def scan(d, lang):

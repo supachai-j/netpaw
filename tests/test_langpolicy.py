@@ -87,6 +87,29 @@ class Policy(unittest.TestCase):
         ev = {"server.ts": "const f = new Function('return 1');\n", "package-lock.json": "{}"}
         self.assertTrue(any("spawn processes" in e for e in self.check("typescript", files=ev)))
 
+    def test_h5_7_gaps(self):
+        cases = [
+            ("typescript", {"server.ts": "export const x = 1;\n", "dist/server.js": "const h = require('https');\n", "package-lock.json": "{}"}, "network modules"),
+            ("typescript", {"server.ts": "const m = await import('node:https');\n", "package-lock.json": "{}"}, "network modules"),
+            ("typescript", {"server.ts": "const n = 'child_' + 'process'; const m = await import(n);\n", "package-lock.json": "{}"}, "spawn processes"),
+            ("typescript", {"server.ts": "const m = require(name);\n", "package-lock.json": "{}"}, "spawn processes"),
+            ("typescript", {"server.ts": "import vm from 'node:vm';\n", "package-lock.json": "{}"}, "spawn processes"),
+            ("go", {"main.go": 'package main\nimport "net/smtp"\nfunc main(){}\n', "go.sum": ""}, "network modules"),
+            ("go", {"main.go": 'package main\nimport "golang.org/x/sys/unix"\nfunc main(){}\n', "go.sum": ""}, "spawn processes"),
+            ("rust", {"main.rs": "fn main(){ unsafe { libc::system(c.as_ptr()); } }\n", "Cargo.lock": ""}, "spawn processes"),
+        ]
+        for lang, files, want in cases:
+            with tempfile.TemporaryDirectory() as t:
+                root = pathlib.Path(t); d = root / "s"
+                for f, txt in files.items(): (d / f).parent.mkdir(parents=True, exist_ok=True); (d / f).write_text(txt)
+                _, cmd, args = GOOD[lang]
+                errs = lp.check("s", entry(lang, cmd, args), root)
+                self.assertTrue(any(want in e for e in errs), (lang, files, errs))
+        ok = {"main.go": 'package main\nimport ("net/url"; "net/netip")\nfunc main(){}\n', "go.sum": ""}
+        self.assertFalse(any("network" in e for e in self.check("go", files=ok)))     # parsing packages are not network access
+        ts_ok = {"server.ts": "import { z } from 'zod';\ntype T = import('zod').ZodType;\n", "package-lock.json": "{}"}
+        self.assertEqual(self.check("typescript", files=ts_ok), [])
+
     def test_vendored_dirs_are_not_scanned(self):
         files = dict(GOOD["typescript"][0]); files["node_modules/x/index.js"] = "const http=require('http')"
         with tempfile.TemporaryDirectory() as t:
