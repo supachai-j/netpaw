@@ -1,5 +1,5 @@
 # bgp-registry-intel - review note (NOT an import: independent reimplementation)
-Upstream: NetClaw skill `bgp-registry-intel` (134 lines, Apache-2.0, NetClaw @cfafa46c). Read 2026-11-15: SKILL.md only. It calls `bgp-intel-mcp` through `$BGP_INTEL_MCP_CMD`; that server's source was not in the tree I read, so nothing of it was reviewed or reused.
+Upstream: NetClaw skill `bgp-registry-intel` (134 lines, Apache-2.0, NetClaw @cfafa46c). Read 2026-11-15: SKILL.md only. It calls `bgp-intel-mcp` through `$BGP_INTEL_MCP_CMD`. That server's source is in NetClaw at `mcp-servers/bgp-intel-mcp/` (10 Python files; the tester ran it as a control against the acceptance pack: 32 of 71 tests passed). I did not read it while writing ours and nothing of it was copied, so the attribution covers the skill idea, tool names and interpretation rules only.
 - VERIFIED (upstream text): 10 tool names; credentials none; read-only; rules about RPKI states, registry versus routing, PeeringDB being self-reported.
 - VERIFIED (scanner, earlier NetClaw-wide run by the tester): SkillSpector 2.8.2 scored the upstream SKILL.md 0/100 SAFE. Our own files have not been scanned yet.
 Decision (D-14): own stdlib server with 7 tools; skill text rewritten, keeping the interpretation rules.
@@ -32,3 +32,5 @@ Acceptance pack by the tester (73 tests, written before seeing the code): 9 fail
 - B-5 IPv6 forms carrying a private IPv4 (NAT64 64:ff9b::/96 and 64:ff9b:1::/48, IPv4-mapped/compatible, 6to4, Teredo) are refused locally.
 - B-6 an RPKI answer about a different prefix or AS than asked is `validation_unavailable`.
 - B-7 RIPEstat requests carry `sourceapp=netpaw` as RIPE asks.
+- Docs D-1..D-4 (tester part 2): SKILL.md now names the embedded-IPv4 refusal and the supernet limit; this note names the upstream server's location; the manual says PeeringDB contacts are "not returned" rather than "not requested"; pacing text matches the code.
+- Tester part 2 on 23c44d1: Codex first session listed all 6 servers in 6/6 fresh homes; thClaws and OpenClaw called rpki_validate; Cisco skill-scanner 0 findings and SkillSpector 0/100 on the skill folder; server-code findings were the declared registry calls.
