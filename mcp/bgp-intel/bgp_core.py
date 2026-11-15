@@ -8,7 +8,7 @@ filtered: no person names, phone numbers or postal addresses are returned; the a
 Politeness: requests are serial, at least 0.25 s apart per host, and cached per source (RPKI 5 min, everything else 1 h to 24 h).
 """
 from __future__ import annotations
-import datetime, ipaddress, json, os, re, sys, time, urllib.error, urllib.parse, urllib.request
+import datetime, http.client, ipaddress, json, os, re, sys, time, urllib.error, urllib.parse, urllib.request
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "_shared"))
 from textclean import flatten
 
@@ -27,6 +27,8 @@ ALLOW = {
 TIMEOUT = 15
 MAX_BYTES = 8_000_000
 MIN_INTERVAL = 0.25
+HOST_INTERVAL = {"www.peeringdb.com": 3.1}   # PeeringDB anonymous limit is 20 requests/minute (tester B-2)
+SOURCEAPP = "netpaw"                        # RIPEstat asks callers to identify themselves (tester B-7)
 UA = "netpaw-bgp-intel/0.1 (+https://github.com/supachai-j/netpaw)"
 CTYPES = ("application/json", "application/rdap+json")
 TTL = {"rpki-validator.ripe.net": 300, "stat.ripe.net": 3600, "www.peeringdb.com": 3600, "data.iana.org": 86400}
@@ -79,7 +81,7 @@ def _http(url: str, hops: int = 0) -> str:
     """The only function that touches the network."""
     if not allowed(url): raise BgpError("refused: URL outside the allow-list")
     host = urllib.parse.urlsplit(url).hostname
-    wait = MIN_INTERVAL - (time.monotonic() - _last.get(host, 0.0))
+    wait = max(MIN_INTERVAL, HOST_INTERVAL.get(host, 0.0)) - (time.monotonic() - _last.get(host, 0.0))
     if wait > 0: time.sleep(wait)
     _last[host] = time.monotonic()
     req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept": "application/rdap+json, application/json"})
@@ -88,11 +90,13 @@ def _http(url: str, hops: int = 0) -> str:
             ctype = (r.headers.get("Content-Type") or "").split(";")[0].strip().lower()
             if ctype not in CTYPES: raise BgpError(f"source unavailable: unexpected content-type from {host}")
             data = _read(r, MAX_BYTES + 1, time.monotonic() + TIMEOUT)
+            final = host
+    except BgpError: raise
     except urllib.error.HTTPError as e:
         loc = e.headers.get("Location") if e.headers else None
         code = e.code; e.close()
         if code in (301, 302, 303, 307, 308) and host in RDAP_HOSTS and loc and hops < 2 and allowed(loc) and urllib.parse.urlsplit(loc).hostname in RDAP_HOSTS:
-            return _http(loc, hops + 1)
+            return _http(loc, hops + 1)     # returns (text, host that actually answered)
         if code in (301, 302, 303, 307, 308):
             to = _s(urllib.parse.urlsplit(loc or "").hostname or "an unknown host", 80)
             raise BgpError(f"referral not followed: {host} refers this resource to {to}, which is not on the allow-list (for example a national registry). Registration data is not available through this tool; this is not 'no record'.") from None
@@ -103,8 +107,10 @@ def _http(url: str, hops: int = 0) -> str:
         raise BgpError(f"source unavailable: network error reaching {host} ({_s(str(e.reason), 80)}). This is not the same as 'no record'.") from None
     except (TimeoutError, OSError):
         raise BgpError(f"source unavailable: timeout or connection error reaching {host}. This is not the same as 'no record'.") from None
+    except (http.client.HTTPException, ValueError):      # tester B-1: a peer that does not speak HTTP (BadStatusLine, IncompleteRead, bad headers)
+        raise BgpError(f"source unavailable: malformed HTTP response from {host}. This is not the same as 'no record'.") from None
     if len(data) > MAX_BYTES: raise BgpError(f"source unavailable: response from {host} exceeds the size cap")
-    return data.decode("utf-8", "replace")
+    return data.decode("utf-8", "replace"), final
 
 
 def _get(url: str, fresh: bool = False):
@@ -114,17 +120,20 @@ def _get(url: str, fresh: bool = False):
     ttl, now, hit = TTL.get(host, TTL_RDAP), time.time(), _cache.get(url)
     cached = bool(hit) and not fresh and now - hit[0] < ttl
     if not cached:
-        text = _http(url)
+        got = _http(url)
+        text, answered = got if isinstance(got, tuple) else (got, host)
         _cache.pop(url, None)
         while len(_cache) >= CACHE_MAX: _cache.pop(next(iter(_cache)))
-        _cache[url] = hit = (now, text)
+        _cache[url] = hit = (now, text, answered)
+    answered = hit[2] if len(hit) > 2 else host
     try: d = json.loads(hit[1])
     except (ValueError, RecursionError):
         _cache.pop(url, None); raise BgpError(f"source unavailable: {host} did not return valid JSON") from None
     if not isinstance(d, dict): raise BgpError(f"source unavailable: unexpected response shape from {host}")
-    meta = {"untrusted_external_text": True, "source": host, "source_url": url,
+    meta = {"untrusted_external_text": True, "source": answered, "source_url": url,
             "retrieved_at": datetime.datetime.fromtimestamp(hit[0], datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
             "cached": cached, "cache_age_seconds": int(now - hit[0]) if cached else None}
+    if answered != host: meta["referred_from"] = host     # tester B-4: name the registry that actually answered
     return d, meta
 
 
@@ -142,9 +151,22 @@ def asn(value) -> int:
     return n
 
 
+_EMBED = (ipaddress.ip_network("64:ff9b::/96"), ipaddress.ip_network("64:ff9b:1::/48"), ipaddress.ip_network("::ffff:0:0/96"), ipaddress.ip_network("::/96"))
+
+
+def _embedded_v4(net):
+    """IPv4 carried inside an IPv6 prefix (NAT64, IPv4-mapped/compatible, 6to4, Teredo): tester B-5."""
+    a = net.network_address
+    if any(net.subnet_of(b) for b in _EMBED): return ipaddress.ip_address(int(a) & 0xFFFFFFFF)
+    return a.sixtofour or (a.teredo[1] if a.teredo else None)
+
+
 def _public(net) -> None:
     # ip_network.is_global is true for a supernet such as 0.0.0.0/0 that contains private space, so both ends and the length are checked too
     short = net.prefixlen < (8 if net.version == 4 else 16)
+    v4 = _embedded_v4(net) if net.version == 6 else None
+    if v4 is not None and not v4.is_global:
+        raise BgpError(f"{net} carries the IPv4 address {v4}, which is private or reserved; refused locally (nothing was sent to a public registry)")
     if short or not net.is_global or net.is_multicast or not net.network_address.is_global or not net.broadcast_address.is_global:
         raise BgpError(f"{net} is private, reserved, documentation or multicast space; refused locally (nothing was sent to a public registry)")
 
@@ -192,6 +214,10 @@ def rpki_validate(pfx, origin_asn, fresh: bool = False) -> dict:
     try: d, meta = _get(f"https://rpki-validator.ripe.net/api/v1/validity/AS{n}/{net}", fresh)
     except BgpError as e:
         raise BgpError(f"validation_unavailable: {e}. The RPKI state is unknown; do not report it as not_found.") from None
+    route = _d(_d(d.get("validated_route")).get("route"))
+    try: same = _s(route.get("origin_asn"), 16).upper() == f"AS{n}" and ipaddress.ip_network(_s(route.get("prefix"), 60), strict=False) == net
+    except ValueError: same = False
+    if not same: raise BgpError("validation_unavailable: the validator answered about a different route than the one asked. The RPKI state is unknown.")
     v = _d(_d(d.get("validated_route")).get("validity"))
     raw = _s(v.get("state"), 20).lower()
     if raw not in ("valid", "invalid", "not-found"): raise BgpError("validation_unavailable: the validator returned an unknown state. The RPKI state is unknown.")
@@ -295,7 +321,7 @@ def registry_abuse_contact(res, fresh: bool = False) -> dict:
 
 # ---------------------------------------------------------------- RIPEstat
 def _stat(call: str, n: int, fresh: bool):
-    d, meta = _get(f"https://stat.ripe.net/data/{call}/data.json?resource=AS{n}", fresh)
+    d, meta = _get(f"https://stat.ripe.net/data/{call}/data.json?resource=AS{n}&sourceapp={SOURCEAPP}", fresh)
     if _s(d.get("status"), 20).lower() != "ok": raise BgpError("source unavailable: stat.ripe.net did not return status ok. This is not the same as 'no record'.")
     return _d(d.get("data")), meta
 
@@ -337,12 +363,20 @@ def _pdb(n: int, depth2: bool, fresh: bool):
     return (rows[0] if rows else None), meta
 
 
+def _web(v) -> str:
+    """Only http(s) links with a host; javascript:, data: and the like are dropped (tester B-3)."""
+    u = _s(v, 200)
+    try: p = urllib.parse.urlsplit(u)
+    except ValueError: return ""
+    return u if p.scheme.lower() in ("http", "https") and p.hostname and not re.search(r"\s", u) else ""
+
+
 @_safe
 def peering_network(a, fresh: bool = False) -> dict:
     n = asn(a); row, meta = _pdb(n, False, fresh)
     if row is None: return {**meta, "outcome": "no_record", "data": {"asn": f"AS{n}"}, "caveats": C_PDB}
     num = lambda k: row.get(k) if isinstance(row.get(k), int) and not isinstance(row.get(k), bool) else None
-    data = {"asn": f"AS{n}", "name": _s(row.get("name"), 120), "aka": _s(row.get("aka"), 120), "website": _s(row.get("website"), 200), "irr_as_set": _s(row.get("irr_as_set"), 200),
+    data = {"asn": f"AS{n}", "name": _s(row.get("name"), 120), "aka": _s(row.get("aka"), 120), "website": _web(row.get("website")), "irr_as_set": _s(row.get("irr_as_set"), 200),
             "network_type": _s(row.get("info_type"), 40), "traffic": _s(row.get("info_traffic"), 40), "ratio": _s(row.get("info_ratio"), 40), "scope": _s(row.get("info_scope"), 40),
             "prefixes_ipv4": num("info_prefixes4"), "prefixes_ipv6": num("info_prefixes6"), "peering_policy": _s(row.get("policy_general"), 40),
             "ix_count": num("ix_count"), "facility_count": num("fac_count"), "record_updated": _s(row.get("updated"), 40)}

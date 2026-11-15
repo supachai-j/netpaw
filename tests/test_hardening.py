@@ -202,3 +202,22 @@ class SharedProxy(unittest.TestCase):
         for opts in (["--set-env", "lowercase=1"], ["--set-env", "A"], ["--bogus"], ["--cache"]):
             r = subprocess.run([sys.executable, str(P), *opts, "--", "true"], capture_output=True, text=True, input="", timeout=20)
             self.assertNotEqual(r.returncode, 0, opts)
+
+
+class MalformedHttp(unittest.TestCase):
+    """Tester W-5/B-1: a peer that does not speak HTTP must give the module's own error, not a raw http.client exception."""
+    def test_wiki_and_rfc(self):
+        import http.client
+        sys.path.insert(0, str(R / "mcp" / "wikipedia")); sys.path.insert(0, str(R / "mcp" / "rfc-lookup"))
+        import wiki_core, rfc_core
+        class Op:
+            def __init__(s, exc): s.exc = exc
+            def open(s, *a, **k): raise s.exc
+        for mod, err, call in ((wiki_core, wiki_core.WikiError, lambda: wiki_core._fetch(wiki_core.API + "?x=1")),
+                               (rfc_core, rfc_core.RfcError, lambda: rfc_core._fetch("https://www.rfc-editor.org/rfc/rfc1.txt", 1000))):
+            orig = mod.urllib.request.build_opener
+            try:
+                for exc in (http.client.BadStatusLine("x"), http.client.IncompleteRead(b""), ConnectionResetError()):
+                    mod.urllib.request.build_opener = lambda *a, e=exc: Op(e)
+                    with self.assertRaises(err, msg=(mod.__name__, exc)): call()
+            finally: mod.urllib.request.build_opener = orig

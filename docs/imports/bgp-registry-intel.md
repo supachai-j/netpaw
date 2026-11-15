@@ -22,3 +22,13 @@ Host and path allow-list checked before every request and on every referral; htt
 
 ## NOT checked
 Behaviour when a source rate limits (a 429 becomes an error; no retry); PeeringDB anonymous query limits; terms of use of each source for automated use (read them before heavy use; the skill forbids sweeps); whether an abuse mailbox can be a personal address at small holders (possible; it is still the published abuse contact); HTTPS_PROXY environments; any agent runtime; any real model; scanners; independent security review.
+
+## Tester findings on PR #18 (H4, commit 23c44d1) and fixes
+Acceptance pack by the tester (73 tests, written before seeing the code): 9 failed on 23c44d1. After the fixes below, 73 pass (1 skipped: optional tools not built); the same pack against 23c44d1's core still fails 17 records, so the pack detects the gaps.
+- B-1 a non-HTTP peer leaked `http.client` exceptions: now `source unavailable: malformed HTTP response`. Same fix in wikipedia and rfc-lookup (W-5).
+- B-2 PeeringDB anonymous limit is 20 requests/minute: at least 3.1 s between PeeringDB requests.
+- B-3 PeeringDB `website` could carry `javascript:`: only http(s) URLs with a host are returned.
+- B-4 after an RDAP referral, `source` is the registry that answered and `referred_from` the one asked.
+- B-5 IPv6 forms carrying a private IPv4 (NAT64 64:ff9b::/96 and 64:ff9b:1::/48, IPv4-mapped/compatible, 6to4, Teredo) are refused locally.
+- B-6 an RPKI answer about a different prefix or AS than asked is `validation_unavailable`.
+- B-7 RIPEstat requests carry `sourceapp=netpaw` as RIPE asks.
