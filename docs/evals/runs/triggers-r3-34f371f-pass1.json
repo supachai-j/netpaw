@@ -1,0 +1,1496 @@
+{
+ "subnet-calculator": {
+  "queries": [
+   {
+    "query": "I'm carving 10.20.0.0/16 into per-site blocks: 3 sites need 500 hosts, 4 need 100, 6 need 30. can you lay out a VLSM plan?",
+    "should_trigger": true,
+    "split": "train",
+    "runs": [
+     true,
+     true,
+     true
+    ],
+    "trigger_rate": 1.0,
+    "pass": true
+   },
+   {
+    "query": "what's the ACL wildcard mask for 172.16.8.0/21",
+    "should_trigger": true,
+    "split": "train",
+    "runs": [
+     false,
+     true,
+     true
+    ],
+    "trigger_rate": 0.6666666666666666,
+    "pass": true
+   },
+   {
+    "query": "are 192.0.2.77 and 192.0.2.130 on the same /25?",
+    "should_trigger": true,
+    "split": "train",
+    "runs": [
+     true,
+     false,
+     false
+    ],
+    "trigger_rate": 0.3333333333333333,
+    "pass": false
+   },
+   {
+    "query": "we got a /48 from our ISP, how should I split it between 12 sites and their VLANs",
+    "should_trigger": true,
+    "split": "train",
+    "runs": [
+     true,
+     true,
+     true
+    ],
+    "trigger_rate": 1.0,
+    "pass": true
+   },
+   {
+    "query": "hey is a /31 ok for a point to point link between two routers or do I need a /30",
+    "should_trigger": true,
+    "split": "train",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": false
+   },
+   {
+    "query": "need the next subnet after 198.51.100.64/26 so I can assign it to the new vlan",
+    "should_trigger": true,
+    "split": "train",
+    "runs": [
+     true,
+     true,
+     true
+    ],
+    "trigger_rate": 1.0,
+    "pass": true
+   },
+   {
+    "query": "Write the OSPF network statement for the 10.4.32.0/20 interface range and include the right wildcard",
+    "should_trigger": true,
+    "split": "validation",
+    "runs": [
+     true,
+     true,
+     true
+    ],
+    "trigger_rate": 1.0,
+    "pass": true
+   },
+   {
+    "query": "how many usable hosts do I get from 203.0.113.0/27? and first/last",
+    "should_trigger": true,
+    "split": "validation",
+    "runs": [
+     false,
+     true,
+     true
+    ],
+    "trigger_rate": 0.6666666666666666,
+    "pass": true
+   },
+   {
+    "query": "which subnet does 2001:db8:1234:5600::/56 break into for /64 vlans? how many?",
+    "should_trigger": true,
+    "split": "validation",
+    "runs": [
+     true,
+     true,
+     true
+    ],
+    "trigger_rate": 1.0,
+    "pass": true
+   },
+   {
+    "query": "my teammate configured 10.1.1.5/24 on the uplink and the neighbour 10.1.2.6/24 can't reach it, why?",
+    "should_trigger": true,
+    "split": "validation",
+    "runs": [
+     true,
+     true,
+     true
+    ],
+    "trigger_rate": 1.0,
+    "pass": true
+   },
+   {
+    "query": "Explain the difference between a Layer 2 and Layer 3 switch.",
+    "should_trigger": false,
+    "split": "train",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": true
+   },
+   {
+    "query": "What DNS records do I need for mail delivery on a new domain?",
+    "should_trigger": false,
+    "split": "train",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": true
+   },
+   {
+    "query": "show me the BGP neighbours on the edge router and their state",
+    "should_trigger": false,
+    "split": "train",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": true
+   },
+   {
+    "query": "Configure DHCP on the core switch to hand out 192.0.2.0/24 with a 8 hour lease",
+    "should_trigger": false,
+    "split": "train",
+    "runs": [
+     false,
+     true,
+     false
+    ],
+    "trigger_rate": 0.3333333333333333,
+    "pass": true
+   },
+   {
+    "query": "write a python function that parses a CSV and sums a column",
+    "should_trigger": false,
+    "split": "train",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": true
+   },
+   {
+    "query": "Which RFC defines /31 point-to-point links?",
+    "should_trigger": false,
+    "split": "train",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": true
+   },
+   {
+    "query": "Summarize this firewall policy and tell me which rules are redundant",
+    "should_trigger": false,
+    "split": "validation",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": true
+   },
+   {
+    "query": "troubleshoot why my VPN tunnel flaps every 10 minutes",
+    "should_trigger": false,
+    "split": "validation",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": true
+   },
+   {
+    "query": "explain how spanning tree elects a root bridge",
+    "should_trigger": false,
+    "split": "validation",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": true
+   },
+   {
+    "query": "generate a Terraform module for an AWS VPC with two public subnets",
+    "should_trigger": false,
+    "split": "validation",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": true
+   }
+  ],
+  "servers": [
+   "subnet-calc"
+  ],
+  "train_pass": "10/12",
+  "validation_pass": "8/8"
+ },
+ "fwrule-analyzer": {
+  "queries": [
+   {
+    "query": "I'm about to add a permit tcp/443 from 10.1.0.0/16 to 192.0.2.10 on our firewall. Here are the existing rules, will the new one ever match?",
+    "should_trigger": true,
+    "split": "train",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": false
+   },
+   {
+    "query": "audit this Palo Alto ruleset export for shadowed or duplicate rules",
+    "should_trigger": true,
+    "split": "train",
+    "runs": [
+     true,
+     true,
+     true
+    ],
+    "trigger_rate": 1.0,
+    "pass": true
+   },
+   {
+    "query": "can you check whether rule 14 on this ASA is already covered by something above it",
+    "should_trigger": true,
+    "split": "train",
+    "runs": [
+     true,
+     true,
+     false
+    ],
+    "trigger_rate": 0.6666666666666666,
+    "pass": true
+   },
+   {
+    "query": "we're migrating from ASA to FortiGate, compare these two policies and tell me where they differ",
+    "should_trigger": true,
+    "split": "train",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": false
+   },
+   {
+    "query": "find redundant rules in this iptables-like allow list I pasted: permit ip 10.0.0.0/8 any, permit tcp 10.2.0.0/16 any eq 22 ...",
+    "should_trigger": true,
+    "split": "train",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": false
+   },
+   {
+    "query": "quick sanity check before change window: does my new deny conflict with anything already in the policy?",
+    "should_trigger": true,
+    "split": "train",
+    "runs": [
+     true,
+     false,
+     false
+    ],
+    "trigger_rate": 0.3333333333333333,
+    "pass": false
+   },
+   {
+    "query": "cleanup time. which rules in this Check Point policy can be removed without changing behaviour?",
+    "should_trigger": true,
+    "split": "validation",
+    "runs": [
+     false,
+     false,
+     true
+    ],
+    "trigger_rate": 0.3333333333333333,
+    "pass": false
+   },
+   {
+    "query": "is there any overlap between rule 'allow-web' and 'allow-any-internal' in these two JunOS SRX policies",
+    "should_trigger": true,
+    "split": "validation",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": false
+   },
+   {
+    "query": "normalize these Cisco IOS ACL lines and the FortiOS policy into one schema so I can diff them",
+    "should_trigger": true,
+    "split": "validation",
+    "runs": [
+     true,
+     false,
+     true
+    ],
+    "trigger_rate": 0.6666666666666666,
+    "pass": true
+   },
+   {
+    "query": "Here's a list of 40 rules, order matters, find anything that can never be hit",
+    "should_trigger": true,
+    "split": "validation",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": false
+   },
+   {
+    "query": "Write an ACL that permits only SSH from the management subnet",
+    "should_trigger": false,
+    "split": "train",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": true
+   },
+   {
+    "query": "how does a stateful firewall track UDP sessions?",
+    "should_trigger": false,
+    "split": "train",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": true
+   },
+   {
+    "query": "what's the CIDR range for 192.168.4.0/22",
+    "should_trigger": false,
+    "split": "train",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": true
+   },
+   {
+    "query": "push this config to the firewall and commit it",
+    "should_trigger": false,
+    "split": "train",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": true
+   },
+   {
+    "query": "which RFC covers NAT traversal?",
+    "should_trigger": false,
+    "split": "train",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": true
+   },
+   {
+    "query": "My firewall CPU is at 90%, how do I find the cause?",
+    "should_trigger": false,
+    "split": "train",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": true
+   },
+   {
+    "query": "create a PowerPoint about zero trust for the board",
+    "should_trigger": false,
+    "split": "validation",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": true
+   },
+   {
+    "query": "compare Palo Alto vs Fortinet pricing and licensing",
+    "should_trigger": false,
+    "split": "validation",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": true
+   },
+   {
+    "query": "explain what a DMZ is",
+    "should_trigger": false,
+    "split": "validation",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": true
+   },
+   {
+    "query": "is CVE-2024-3400 exploitable on our version?",
+    "should_trigger": false,
+    "split": "validation",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": true
+   }
+  ],
+  "servers": [
+   "fwrule"
+  ],
+  "train_pass": "8/12",
+  "validation_pass": "5/8"
+ },
+ "rfc-lookup": {
+  "queries": [
+   {
+    "query": "what does RFC 4271 say a BGP speaker must do when it gets a malformed UPDATE?",
+    "should_trigger": true,
+    "split": "train",
+    "runs": [
+     true,
+     true,
+     true
+    ],
+    "trigger_rate": 1.0,
+    "pass": true
+   },
+   {
+    "query": "is the hold timer negotiation MUST or SHOULD in the BGP spec",
+    "should_trigger": true,
+    "split": "train",
+    "runs": [
+     true,
+     true,
+     true
+    ],
+    "trigger_rate": 1.0,
+    "pass": true
+   },
+   {
+    "query": "quote the security considerations section of RFC 7454",
+    "should_trigger": true,
+    "split": "train",
+    "runs": [
+     true,
+     true,
+     true
+    ],
+    "trigger_rate": 1.0,
+    "pass": true
+   },
+   {
+    "query": "find the RFC that obsoleted RFC 2460",
+    "should_trigger": true,
+    "split": "train",
+    "runs": [
+     true,
+     true,
+     true
+    ],
+    "trigger_rate": 1.0,
+    "pass": true
+   },
+   {
+    "query": "I need the standards reference for IPv6 neighbor discovery, which RFC and what section covers duplicate address detection",
+    "should_trigger": true,
+    "split": "train",
+    "runs": [
+     true,
+     true,
+     true
+    ],
+    "trigger_rate": 1.0,
+    "pass": true
+   },
+   {
+    "query": "search for RFCs about BGP route leak prevention and tell me which are standards track",
+    "should_trigger": true,
+    "split": "train",
+    "runs": [
+     true,
+     true,
+     true
+    ],
+    "trigger_rate": 1.0,
+    "pass": true
+   },
+   {
+    "query": "what does the OSPF spec say about the DR election tie-break",
+    "should_trigger": true,
+    "split": "validation",
+    "runs": [
+     true,
+     true,
+     true
+    ],
+    "trigger_rate": 1.0,
+    "pass": true
+   },
+   {
+    "query": "cite the correct RFC section for the NTP kiss-o'-death packet",
+    "should_trigger": true,
+    "split": "validation",
+    "runs": [
+     true,
+     true,
+     true
+    ],
+    "trigger_rate": 1.0,
+    "pass": true
+   },
+   {
+    "query": "Is /127 allowed on IPv6 point-to-point links per the standards?",
+    "should_trigger": true,
+    "split": "validation",
+    "runs": [
+     true,
+     true,
+     true
+    ],
+    "trigger_rate": 1.0,
+    "pass": true
+   },
+   {
+    "query": "our vendor claims they are 'fully compliant with the TCP spec'. what does RFC 9293 actually require for the initial window?",
+    "should_trigger": true,
+    "split": "validation",
+    "runs": [
+     true,
+     true,
+     true
+    ],
+    "trigger_rate": 1.0,
+    "pass": true
+   },
+   {
+    "query": "calculate the subnet mask for a /26",
+    "should_trigger": false,
+    "split": "train",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": true
+   },
+   {
+    "query": "tell me about the history of the Internet Engineering Task Force",
+    "should_trigger": false,
+    "split": "train",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": true
+   },
+   {
+    "query": "what is the latest Cisco IOS XE release and its known bugs",
+    "should_trigger": false,
+    "split": "train",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": true
+   },
+   {
+    "query": "check whether our edge router is vulnerable to CVE-2023-20198",
+    "should_trigger": false,
+    "split": "train",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": true
+   },
+   {
+    "query": "explain BGP to a beginner in simple words",
+    "should_trigger": false,
+    "split": "train",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": true
+   },
+   {
+    "query": "show interface counters on switch1",
+    "should_trigger": false,
+    "split": "train",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": true
+   },
+   {
+    "query": "write a Python script to download a web page",
+    "should_trigger": false,
+    "split": "validation",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": true
+   },
+   {
+    "query": "what's the difference between TCP and UDP",
+    "should_trigger": false,
+    "split": "validation",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": true
+   },
+   {
+    "query": "summarize this vendor datasheet pdf",
+    "should_trigger": false,
+    "split": "validation",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": true
+   },
+   {
+    "query": "how do I configure OSPF on a Juniper router",
+    "should_trigger": false,
+    "split": "validation",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": true
+   }
+  ],
+  "servers": [
+   "rfc-lookup"
+  ],
+  "train_pass": "12/12",
+  "validation_pass": "8/8"
+ },
+ "eve-lab-topology-design": {
+  "queries": [
+   {
+    "query": "I'm planning a leaf-spine lab in EVE-NG with 2 spines and 4 leaves, can you design it and tell me what could go wrong?",
+    "should_trigger": true,
+    "split": "train",
+    "runs": [
+     true,
+     true,
+     true
+    ],
+    "trigger_rate": 1.0,
+    "pass": true
+   },
+   {
+    "query": "Here is my .unl file content, can you check it for orphan nodes or single points of failure?",
+    "should_trigger": true,
+    "split": "train",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": false
+   },
+   {
+    "query": "design a branch WAN lab with two routers and a firewall, dual ISP, give me the physical and logical topology",
+    "should_trigger": true,
+    "split": "train",
+    "runs": [
+     true,
+     true,
+     true
+    ],
+    "trigger_rate": 1.0,
+    "pass": true
+   },
+   {
+    "query": "Review my campus lab design: 2 core, 2 distribution, 4 access switches. Is the redundancy real?",
+    "should_trigger": true,
+    "split": "train",
+    "runs": [
+     true,
+     true,
+     true
+    ],
+    "trigger_rate": 1.0,
+    "pass": true
+   },
+   {
+    "query": "I need a build plan for an MPLS provider lab with PE, P and RR nodes",
+    "should_trigger": true,
+    "split": "train",
+    "runs": [
+     true,
+     true,
+     true
+    ],
+    "trigger_rate": 1.0,
+    "pass": true
+   },
+   {
+    "query": "which nodes in this lab topology are a SPOF? <lab name='x'><node id='1' name='R1'>...",
+    "should_trigger": true,
+    "split": "train",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": false
+   },
+   {
+    "query": "plan a CCNP ENARSI practice lab with OSPF and BGP on 6 routers",
+    "should_trigger": true,
+    "split": "validation",
+    "runs": [
+     true,
+     true,
+     true
+    ],
+    "trigger_rate": 1.0,
+    "pass": true
+   },
+   {
+    "query": "can you validate this exported EVE-NG lab so I know no link is dangling",
+    "should_trigger": true,
+    "split": "validation",
+    "runs": [
+     true,
+     true,
+     true
+    ],
+    "trigger_rate": 1.0,
+    "pass": true
+   },
+   {
+    "query": "Help me decide how many nodes and what RAM my EVE-NG server needs for a data center lab",
+    "should_trigger": true,
+    "split": "validation",
+    "runs": [
+     true,
+     true,
+     true
+    ],
+    "trigger_rate": 1.0,
+    "pass": true
+   },
+   {
+    "query": "check that no host is directly connected to a core router in my lab file",
+    "should_trigger": true,
+    "split": "validation",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": false
+   },
+   {
+    "query": "What's the wildcard mask for 10.0.0.0/22?",
+    "should_trigger": false,
+    "split": "train",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": true
+   },
+   {
+    "query": "start all nodes in my EVE-NG lab and open the consoles",
+    "should_trigger": false,
+    "split": "train",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": true
+   },
+   {
+    "query": "push this OSPF config to R1 and R2",
+    "should_trigger": false,
+    "split": "train",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": true
+   },
+   {
+    "query": "explain how spanning tree elects a root bridge",
+    "should_trigger": false,
+    "split": "train",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": true
+   },
+   {
+    "query": "Which RFC defines BGP route reflection?",
+    "should_trigger": false,
+    "split": "train",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": true
+   },
+   {
+    "query": "write a Python script to parse a CSV of switch ports",
+    "should_trigger": false,
+    "split": "train",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": true
+   },
+   {
+    "query": "audit this firewall ruleset for shadowed rules",
+    "should_trigger": false,
+    "split": "validation",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": true
+   },
+   {
+    "query": "how do I install EVE-NG on VMware",
+    "should_trigger": false,
+    "split": "validation",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": true
+   },
+   {
+    "query": "compare OSPF and IS-IS convergence",
+    "should_trigger": false,
+    "split": "validation",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": true
+   },
+   {
+    "query": "draw an org chart for the networking team",
+    "should_trigger": false,
+    "split": "validation",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": true
+   }
+  ],
+  "servers": [
+   "eve-lab"
+  ],
+  "train_pass": "10/12",
+  "validation_pass": "7/8"
+ },
+ "wikipedia-research": {
+  "queries": [
+   {
+    "query": "give me a quick background on how VXLAN came about and what problem it solves",
+    "should_trigger": true,
+    "split": "train",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": false
+   },
+   {
+    "query": "what's the history of OSPF and who developed it",
+    "should_trigger": true,
+    "split": "train",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": false
+   },
+   {
+    "query": "I'm preparing a training slide about 802.1X, can you gather overview material and related topics",
+    "should_trigger": true,
+    "split": "train",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": false
+   },
+   {
+    "query": "search Wikipedia for MPLS and tell me what the article says about label switching",
+    "should_trigger": true,
+    "split": "train",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": false
+   },
+   {
+    "query": "what categories of protocols does BGP belong to and what related technologies should I read about",
+    "should_trigger": true,
+    "split": "train",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": false
+   },
+   {
+    "query": "explain IPsec at overview level for a beginner course and list where to read more",
+    "should_trigger": true,
+    "split": "train",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": false
+   },
+   {
+    "query": "Where did the idea of anycast routing come from? give me the background",
+    "should_trigger": true,
+    "split": "validation",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": false
+   },
+   {
+    "query": "summarise the Wikipedia article on spanning tree protocol",
+    "should_trigger": true,
+    "split": "validation",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": false
+   },
+   {
+    "query": "what is the difference in origin between IS-IS and OSPF, historical context please",
+    "should_trigger": true,
+    "split": "validation",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": false
+   },
+   {
+    "query": "find references I can follow up on for the LISP protocol",
+    "should_trigger": true,
+    "split": "validation",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": false
+   },
+   {
+    "query": "what does RFC 4271 say about the hold timer",
+    "should_trigger": false,
+    "split": "train",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": true
+   },
+   {
+    "query": "calculate the usable hosts in 10.8.0.0/21",
+    "should_trigger": false,
+    "split": "train",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": true
+   },
+   {
+    "query": "check this firewall policy for shadowed rules",
+    "should_trigger": false,
+    "split": "train",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": true
+   },
+   {
+    "query": "is CVE-2024-3400 exploitable on my PAN-OS version",
+    "should_trigger": false,
+    "split": "train",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": true
+   },
+   {
+    "query": "show interface counters on switch1",
+    "should_trigger": false,
+    "split": "train",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": true
+   },
+   {
+    "query": "write a Python function to merge two sorted lists",
+    "should_trigger": false,
+    "split": "train",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": true
+   },
+   {
+    "query": "design an EVE-NG lab with two spines and four leaves",
+    "should_trigger": false,
+    "split": "validation",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": true
+   },
+   {
+    "query": "what is the latest Cisco IOS XE release",
+    "should_trigger": false,
+    "split": "validation",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": true
+   },
+   {
+    "query": "quote the security considerations of RFC 7454",
+    "should_trigger": false,
+    "split": "validation",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": true
+   },
+   {
+    "query": "translate this paragraph to Thai",
+    "should_trigger": false,
+    "split": "validation",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": true
+   }
+  ],
+  "servers": [
+   "wikipedia"
+  ],
+  "train_pass": "6/12",
+  "validation_pass": "4/8"
+ },
+ "bgp-registry-intel": {
+  "queries": [
+   {
+    "query": "is 193.0.0.0/21 originated by AS3333 RPKI valid?",
+    "should_trigger": true,
+    "split": "train",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": false
+   },
+   {
+    "query": "we see 8.8.8.0/24 from AS15169 on our transit, is that announcement authorised",
+    "should_trigger": true,
+    "split": "train",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": false
+   },
+   {
+    "query": "who owns the IP 1.1.1.1 according to the registry",
+    "should_trigger": true,
+    "split": "train",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": false
+   },
+   {
+    "query": "I need the abuse contact for 8.8.8.8 to report scanning",
+    "should_trigger": true,
+    "split": "train",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": false
+   },
+   {
+    "query": "what prefixes does AS3333 announce",
+    "should_trigger": true,
+    "split": "train",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": false
+   },
+   {
+    "query": "where does AS15169 peer, which IXPs",
+    "should_trigger": true,
+    "split": "train",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": false
+   },
+   {
+    "query": "a new /24 showed up from an AS I do not know, 193.0.0.0/24 from AS3333 - is it legit?",
+    "should_trigger": true,
+    "split": "validation",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": false
+   },
+   {
+    "query": "which RIR is AS13335 registered with and to whom",
+    "should_trigger": true,
+    "split": "validation",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": false
+   },
+   {
+    "query": "what's the peering policy of AS32934",
+    "should_trigger": true,
+    "split": "validation",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": false
+   },
+   {
+    "query": "is there a ROA for 2001:67c:2e8::/48 and AS3333",
+    "should_trigger": true,
+    "split": "validation",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": false
+   },
+   {
+    "query": "calculate the subnets if I split 10.20.0.0/22 into four",
+    "should_trigger": false,
+    "split": "train",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": true
+   },
+   {
+    "query": "explain how BGP path selection works",
+    "should_trigger": false,
+    "split": "train",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": true
+   },
+   {
+    "query": "what does RFC 6811 say about NotFound routes",
+    "should_trigger": false,
+    "split": "train",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": true
+   },
+   {
+    "query": "show me the BGP neighbors on my router R1",
+    "should_trigger": false,
+    "split": "train",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": true
+   },
+   {
+    "query": "check this firewall rule set for shadowed rules",
+    "should_trigger": false,
+    "split": "train",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": true
+   },
+   {
+    "query": "give me the history of the RPKI project",
+    "should_trigger": false,
+    "split": "validation",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": true
+   },
+   {
+    "query": "write an Ansible playbook to configure eBGP on IOS-XE",
+    "should_trigger": false,
+    "split": "validation",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": true
+   },
+   {
+    "query": "design an EVE-NG lab with two BGP route reflectors",
+    "should_trigger": false,
+    "split": "validation",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": true
+   },
+   {
+    "query": "does 192.168.10.0/24 overlap with 192.168.8.0/22",
+    "should_trigger": false,
+    "split": "validation",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": true
+   },
+   {
+    "query": "draft an email to our ISP asking for a second uplink",
+    "should_trigger": false,
+    "split": "train",
+    "runs": [
+     false,
+     false,
+     false
+    ],
+    "trigger_rate": 0.0,
+    "pass": true
+   }
+  ],
+  "servers": [
+   "bgp-intel"
+  ],
+  "train_pass": "6/12",
+  "validation_pass": "4/8"
+ }
+}

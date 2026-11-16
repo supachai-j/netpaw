@@ -41,7 +41,10 @@ def run_one(query, skill, servers, timeout):
     for l in p.stdout.splitlines():
         try: ev.append(json.loads(l))
         except ValueError: pass
-    if not any(e.get("type") == "result" for e in ev): return None
+    res = [e for e in ev if e.get("type") == "result"]
+    if not res: return None
+    # A run that ended in an error (usage limit, API error) says nothing about triggering: count it as no data, not as "not triggered".
+    if (res[-1].get("is_error") or str(res[-1].get("subtype", "")).startswith("error")) and not triggered(ev, skill, servers): return None
     return triggered(ev, skill, servers)
 
 

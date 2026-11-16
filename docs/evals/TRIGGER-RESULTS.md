@@ -29,3 +29,21 @@ wikipedia-research stays weak: general background questions are answered from me
 | bgp-registry-intel | "Use this skill when" description (commit 0a50384) | 12/12 | 8/8 |
 
 bgp-registry-intel: 1 run per query, so read it as a range (other skills moved by about 2 queries between identical runs). All 10 should-not-trigger queries passed, including near misses (BGP theory, RFC 6811 text, RPKI history, router BGP neighbors). The queries name concrete prefixes and AS numbers, which makes them easier than real prompts; the "tested" level still needs 3 runs per query.
+
+## 3 runs per query, all six skills (commit 34f371f, 2026-11-16)
+
+Claude Code `claude -p`, 3 runs per query, a query passes when the trigger rate is above 0.5 in the expected direction. This is the run the `tested` level asks for (validation >= 80% and no false positive).
+
+| skill | train | validation | false positives | trigger bar for tested |
+|---|---|---|---|---|
+| rfc-lookup | 12/12 | 8/8 | 0 | met |
+| bgp-registry-intel | 12/12 | 8/8 | 0 | met (3 of 60 runs errored, counted as no data) |
+| subnet-calculator | 10/12 | 8/8 | 0 | met |
+| eve-lab-topology-design | 10/12 | 7/8 | 0 | met |
+| fwrule-analyzer | 8/12 | 5/8 | 0 | not met |
+| wikipedia-research | 11/12 | 6/8 | 1 ("what is the latest Cisco IOS XE release", 3/3 runs) | not met |
+
+- Meeting the trigger bar does not make a skill `tested`: runtime checks on every claimed agent and a prompt-injection case with a real model are still required.
+- Harness bug found and fixed in this change: a run that ended in an error (for example a usage limit) was counted as "did not trigger". In the first pass wikipedia-research and bgp-registry-intel, which ran last, scored 0/60 runs; a manual run of the same query triggered correctly. Those two skills were re-run with the fixed harness (numbers above). The other four come from the first pass, so any errored run there was counted as a miss: their numbers are a lower bound.
+- fwrule-analyzer misses are queries that describe a ruleset without pasting a parsable one ("here are the existing rules", "these two JunOS policies"); the model asks for the rules or reasons in prose. wikipedia-research still answers well-known background from memory, and the description's "latest release" wording appears to pull in a vendor-release question it should leave alone.
+- Cost: about 480 `claude -p` calls (360 first pass + 120 re-run), approved by the owner.

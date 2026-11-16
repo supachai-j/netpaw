@@ -9,10 +9,10 @@ Every skill carries `metadata.maturity` (checked by lint, shown by `netpaw list`
 | recommended | tested + output eval beats the no-skill baseline on the hard cases + tried on realistic (synthetic or sanitized) data without serious errors |
 
 ## Current state (evidence, 2026-11-14)
-- All six skills are `experimental`; none is `tested`. bgp-registry-intel (added 2026-11-15) has unit tests and a live check only: no runtime test, trigger eval, scanner run or independent security review yet.
+- All six skills are `experimental`; none is `tested`. bgp-registry-intel (added 2026-11-15) has had runtime tests on three agents with a mock model, scanner runs and an independent security review (H5, no blocker).
 - Cisco Skill Scanner 2.3.2 (static, YARA, bytecode, pipeline, correlation, behavioral; no LLM, nothing sent out) on commit edc52d668ae7, on a worker: 3 skills, 0 findings. Control run in the same session worked (bad skill: 2 critical, 1 high; clean skill: 1 info). Installed copy hash equals source.
 - The scanner reads the skill folders only (SKILL.md and evals). It does not read `mcp/` code; that is covered by bandit, semgrep, review and tests. A clean scan is not proof of safety.
-- Trigger eval (Claude Code, 1 run per query, noisy): see docs/evals/TRIGGER-RESULTS.md. subnet-calculator is below the 80% bar.
+- Trigger eval (Claude Code, 3 runs per query, commit 34f371f): rfc-lookup, bgp-registry-intel, subnet-calculator and eve-lab-topology-design meet the trigger bar for `tested`; fwrule-analyzer (5/8) and wikipedia-research (6/8, one false positive) do not. Details: docs/evals/TRIGGER-RESULTS.md. No skill is `tested` yet: real-model runtime and injection checks are still missing.
 - Output evals are written, not run. Other runtimes were not re-tested on these skill versions.
 - rfc-lookup (network egress): cross-reviewed by a different agent (read-only code review plus probes; findings R6-1 proxy env documented, R6-2 unbounded cache fixed with a 16-entry cap). SkillSpector and Cisco scans of PR #7 by that reviewer: no HIGH/CRITICAL; one MEDIUM (undeclared network permission, declared in `compatibility`). Offline injection tests added (hostile RFC text stays flagged data, cannot widen egress). NOT done: a real-model injection test, and a review by the dedicated security-review agent (owner chose not to involve it), so it stays experimental.
 
